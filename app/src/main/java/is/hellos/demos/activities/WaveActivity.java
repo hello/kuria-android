@@ -8,17 +8,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
 import butterknife.BindView;
 import is.hellos.demos.R;
 import is.hellos.demos.graphs.waves.WaveGraphView;
 import is.hellos.demos.models.protos.RadarMessages;
 import is.hellos.demos.network.zmq.ZeroMQSubscriber;
+import is.hellos.demos.utils.HapticUtil;
 
 public class WaveActivity extends BaseActivity
         implements ZeroMQSubscriber.Listener {
@@ -31,6 +26,7 @@ public class WaveActivity extends BaseActivity
     WaveGraphView waveGraphView;
     private final Handler handler = new Handler();
     private boolean pauseOutput;
+    private HapticUtil hapticUtil;
 
     @Override
     protected int getLayoutRes() {
@@ -51,12 +47,16 @@ public class WaveActivity extends BaseActivity
                 updateUI();
             }
         });
+        this.hapticUtil = new HapticUtil(this);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
+        if (this.hapticUtil != null) {
+            this.hapticUtil.cancel();
+            this.hapticUtil = null;
+        }
     }
 
     @Override
@@ -74,7 +74,9 @@ public class WaveActivity extends BaseActivity
     @Override
     public void onDisconnected() {
         // stateTextView.setText(R.string.state_disconnected);
-
+        if (this.hapticUtil != null) {
+            this.hapticUtil.cancel();
+        }
     }
 
 
@@ -98,6 +100,10 @@ public class WaveActivity extends BaseActivity
                         return;
                     }
 
+                    if (isPeak(featureVector)) {
+                        hapticUtil.vibrate(100);
+                    }
+
                     String output = featureVector.toString();
                     stateTextView.setText(output);
                     waveGraphView.update(featureVector.getFloatfeats(0), featureVector.getFloatfeats(1));
@@ -106,6 +112,11 @@ public class WaveActivity extends BaseActivity
                 }
             }
         });
+    }
+
+    //TODO
+    private boolean isPeak(RadarMessages.FeatureVector featureVector) {
+        return Math.abs(featureVector.getFloatfeats(0) - featureVector.getFloatfeats(1)) > 0.55;
     }
 
     private void updateUI() {
