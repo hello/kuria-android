@@ -16,6 +16,8 @@ public class MainActivity extends BaseActivity {
     TextView graphTwoTextView;
     @BindView(R.id.activity_textview_wave_graph_one)
     TextView waveGraph;
+    @BindView(R.id.activity_textview_time_graph_one)
+    TextView timeGraph;
 
 
     @Override
@@ -42,6 +44,12 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, WaveActivity.class));
+            }
+        });
+        timeGraph.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, TimeActivity.class));
             }
         });
 
