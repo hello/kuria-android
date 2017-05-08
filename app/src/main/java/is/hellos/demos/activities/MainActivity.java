@@ -16,7 +16,8 @@ public class MainActivity extends BaseActivity {
     TextView graphTwoTextView;
     @BindView(R.id.activity_textview_wave_graph_one)
     TextView waveGraph;
-
+    @BindView(R.id.activity_textview_respiration_graph)
+    TextView respirationGraph;
 
     @Override
     protected int getLayoutRes() {
@@ -42,6 +43,12 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, WaveActivity.class));
+            }
+        });
+        respirationGraph.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, RespirationActivity.class));
             }
         });
 
