@@ -8,11 +8,12 @@ import android.util.AttributeSet;
 import is.hellos.demos.graphs.GraphDrawable;
 import is.hellos.demos.graphs.GraphView;
 
-public class TimeGraphView extends GraphView{
+public class TimeGraphView extends GraphView {
     private static final int FPS = 30;
     private static final long DELTA_MS = 1000 / FPS;
 
     private long lastUpdate = 0;
+    private long lastAdd = 0;
     public int updates = 0;
 
     public TimeGraphView(final Context context) {
@@ -31,16 +32,15 @@ public class TimeGraphView extends GraphView{
     }
 
 
-
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (System.currentTimeMillis() - lastUpdate > DELTA_MS) {
-            if (updates > 10){
-                updates = 0;
-            }else {
-            }
-            updates++;
+        final long time = System.currentTimeMillis();
+        if (time - lastUpdate > 1000) {
+            ((TimeDrawable) getBackground()).addNode(time, 10);
+            lastUpdate = System.currentTimeMillis();
+        } else {
+            ((TimeDrawable) getBackground()).addNode(time, 0);
         }
         postInvalidateDelayed(DELTA_MS);
     }
