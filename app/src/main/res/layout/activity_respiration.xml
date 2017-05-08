@@ -5,9 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-<TextView
+    <TextView
     android:id="@+id/activity_respiration_state_text_view"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content" />
+
+    <is.hellos.demos.graphs.respiration.RespirationView
+        android:id="@+id/activity_respiration_respiration_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </LinearLayout>

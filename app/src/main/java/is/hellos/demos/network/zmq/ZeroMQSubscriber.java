@@ -27,7 +27,7 @@ public class ZeroMQSubscriber implements Runnable {
      * Feature Vector
      * id = "respiration"
      * you can get zero probabilities and there will still be respiration , or activity
-       0 is mean period of "breaths"
+       0 is mean period of "breaths" in seconds
        1 is standard dev of period of breaths
        2 is energy of signal in decibels -- less than 20 probably means nothing is there (20 - 40) scaling could be completely different depending on data source
        3 is boolean is has respiration

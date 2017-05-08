@@ -8,7 +8,9 @@ import android.widget.TextView;
 
 import butterknife.BindView;
 import is.hellos.demos.R;
+import is.hellos.demos.graphs.respiration.RespirationView;
 import is.hellos.demos.models.protos.RadarMessages;
+import is.hellos.demos.models.respiration.RespirationStat;
 import is.hellos.demos.network.zmq.ZeroMQSubscriber;
 import is.hellos.demos.utils.HapticUtil;
 
@@ -23,6 +25,8 @@ implements ZeroMQSubscriber.Listener{
     private Handler handler = new Handler();
     @BindView(R.id.activity_respiration_state_text_view)
     TextView stateTextView;
+    @BindView(R.id.activity_respiration_respiration_view)
+    RespirationView respirationView;
     ZeroMQSubscriber zeroMQSubscriber;
 
     @Override
@@ -33,7 +37,7 @@ implements ZeroMQSubscriber.Listener{
     @Override
     protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.zeroMQSubscriber = new ZeroMQSubscriber(ZeroMQSubscriber.RESPIRATION_PROBS_TOPIC,
+        this.zeroMQSubscriber = new ZeroMQSubscriber(ZeroMQSubscriber.RESPIRATION_STATS_TOPIC,
                                                     "tcp://192.168.128.57:5564");
         this.zeroMQSubscriber.setListener(this);
         this.hapticUtil = new HapticUtil(this);
@@ -87,6 +91,13 @@ implements ZeroMQSubscriber.Listener{
 
             final String output = featureVector.toString();
             RespirationActivity.this.updateState(output);
+
+            if ("respiration".equals(featureVector.getId())) {
+                final RespirationStat respirationStat = RespirationStat.convertFrom(featureVector);
+                RespirationActivity.this.updateView(respirationStat);
+
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -96,7 +107,16 @@ implements ZeroMQSubscriber.Listener{
         handler.post(new Runnable() {
             @Override
             public void run() {
-                stateTextView.setText(state);
+                RespirationActivity.this.stateTextView.setText(state);
+            }
+        });
+    }
+
+    void updateView(final RespirationStat respirationStat) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                RespirationActivity.this.respirationView.update(respirationStat);
             }
         });
     }
