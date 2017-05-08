@@ -8,6 +8,7 @@ import org.zeromq.ZMQ;
 
 
 public class ZeroMQSubscriber implements Runnable {
+    public static final String BASEBAND_TOPIC = "v1/baseband";
     public static final String PLOT_TOPIC = "PLOT";
     public static final String STATS_TOPIC = "STATS";
   //  private static final String IP_ADDRESS = "tcp://192.168.128.119:5564";

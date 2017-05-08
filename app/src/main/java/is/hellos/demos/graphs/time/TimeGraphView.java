@@ -35,13 +35,11 @@ public class TimeGraphView extends GraphView {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        final long time = System.currentTimeMillis();
-        if (time - lastUpdate > 1000) {
-            ((TimeDrawable) getBackground()).addNode(time, 10);
-            lastUpdate = System.currentTimeMillis();
-        } else {
-            ((TimeDrawable) getBackground()).addNode(time, 0);
-        }
+        //final long time = System.currentTimeMillis();
+        //if (time - lastUpdate > 1000) {
+        //  ((TimeDrawable) getBackground()).addNode(time, 10);
+        //  lastUpdate = System.currentTimeMillis();
+        // }
         postInvalidateDelayed(DELTA_MS);
     }
 
@@ -50,5 +48,9 @@ public class TimeGraphView extends GraphView {
         return new TimeDrawable(getWidth(), getHeight(), FPS);
     }
 
+    public void addValue(final float feat1,
+                         final float feat2) {
+        ((TimeDrawable) getBackground()).addNode(System.currentTimeMillis(), feat1, feat2);
+    }
 
 }

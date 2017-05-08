@@ -12,11 +12,13 @@
     <TextView
         android:id="@+id/activity_time_state"
         android:layout_width="match_parent"
+        android:text="Loading...\nLoading...\nLoading...\nLoading..."
         android:layout_height="wrap_content"
         android:maxLines="4" />
 
     <is.hellos.demos.graphs.time.TimeGraphView
         android:id="@+id/activity_time_graph"
+
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

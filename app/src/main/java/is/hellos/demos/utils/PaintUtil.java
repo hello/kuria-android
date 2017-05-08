@@ -127,4 +127,11 @@ public class PaintUtil {
         return new Pair<>(rect.left + x + dx, rect.top + y + dy);
     }
 
+    public static Paint getPathPaint(int a, int r, int g, int b) {
+        final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setARGB(a, r, g, b);
+        paint.setStrokeWidth(5);
+        paint.setStyle(Paint.Style.STROKE);
+        return paint;
+    }
 }
