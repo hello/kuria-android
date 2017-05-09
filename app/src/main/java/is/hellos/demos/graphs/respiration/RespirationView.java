@@ -33,6 +33,7 @@ public class RespirationView extends GraphView
     private static final float RADIUS_SCALE = 20;
     private final static long DEFAULT_DURATION_MS = 1000;
     private final ValueAnimator animator;
+    private ValueAnimator colorAnimator;
     @ColorInt
     private final int activeColor;
     @ColorInt
@@ -93,8 +94,34 @@ public class RespirationView extends GraphView
         });
     }
 
+    ValueAnimator createColorAnimator(@NonNull final RespirationStat respirationStat) {
+        final RespirationDrawable respirationDrawable = (RespirationDrawable) getBackground();
+        @ColorInt
+        final int targetColor = respirationStat.isHasRespiration() ? restingColor : inactiveColor;
+        final ValueAnimator colorAnimator = ValueAnimator.ofArgb(respirationDrawable.getInnerCircleColor(), targetColor);
+        colorAnimator.setInterpolator(this.animator.getInterpolator());
+        colorAnimator.setDuration(DEFAULT_DURATION_MS);
+        colorAnimator.setRepeatCount(0);
+        colorAnimator.setRepeatMode(ValueAnimator.RESTART);
+        colorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                respirationDrawable.setInnerCircleColor((int) animation.getAnimatedValue());
+            }
+        });
+        return colorAnimator;
+    }
+
     public void update(@NonNull final RespirationStat respirationStat) {
         this.currentRespirationStat = respirationStat;
+
+        if (this.colorAnimator != null && this.colorAnimator.isRunning()) {
+            this.colorAnimator.end();
+        }
+
+        this.colorAnimator = createColorAnimator(respirationStat);
+        this.colorAnimator.start();
+
         if (this.animator.isRunning()) {
             return;
         }
@@ -120,7 +147,6 @@ public class RespirationView extends GraphView
         this.animator.setDuration( (long) (respirationStat.getBreathDurationSeconds() * 1000));
 
         this.animator.start();
-
     }
 
     private float getRestingRadius() {
@@ -187,7 +213,7 @@ public class RespirationView extends GraphView
     @Override
     public void onAnimationUpdate(ValueAnimator animation) {
         final RespirationDrawable respirationDrawable = (RespirationDrawable) getBackground();
-        respirationDrawable.setInnerCircleColor(getInnerCircleColor());
+
         respirationDrawable.setExpandingCircleColor(getExpandingCircleColor(animation.getAnimatedFraction()));
         respirationDrawable.setRadius((float) animation.getAnimatedValue());
         respirationDrawable.setBreathRateText(getFormattedBreathRate());
