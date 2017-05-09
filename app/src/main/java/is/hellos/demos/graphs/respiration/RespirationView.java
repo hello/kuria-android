@@ -1,5 +1,6 @@
 package is.hellos.demos.graphs.respiration;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.support.annotation.ColorInt;
@@ -34,6 +35,8 @@ public class RespirationView extends GraphView
     private final int restingColor;
     @ColorInt
     private final int inactiveColor;
+    @Nullable
+    private RespirationStat currentRespirationStat;
 
     public RespirationView(Context context) {
         this(context, null);
@@ -54,21 +57,54 @@ public class RespirationView extends GraphView
         this.animator.setRepeatCount(ValueAnimator.INFINITE);
         this.animator.setRepeatMode(ValueAnimator.REVERSE);
         animator.addUpdateListener(this);
+        animator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+                updateAnimator(currentRespirationStat);
+            }
+        });
     }
 
     public void update(@NonNull final RespirationStat respirationStat) {
-        //TODO smooth out jump when receiving new respirationStat that changes interpolated values
+        this.currentRespirationStat = respirationStat;
+        if (this.animator.isRunning()) {
+            return;
+        }
+
+        updateAnimator(respirationStat);
+    }
+
+    private void updateAnimator(@Nullable final RespirationStat respirationStat) {
+        if (respirationStat == null) {
+            return;
+        }
 
         //scaled radius end value
         this.animator.setFloatValues(
                 getRestingRadius(),
-                getValidScaledRadius(respirationStat.getEnergyDb(), RADIUS_SCALE)
+                getValidScaledRadius(respirationStat.getEnergyDb(), RADIUS_SCALE),
+                getRestingRadius()
         );
         // calculate duration to match respiration BPM where one full round approx one breath (inhale + exhale)
-        this.animator.setDuration( (long) (respirationStat.getBreathDurationSeconds() / 2 * 1000));
-        if (!this.animator.isStarted()) {
-            this.animator.start();
-        }
+        this.animator.setDuration( (long) (respirationStat.getBreathDurationSeconds() * 1000));
+
+        this.animator.start();
+
     }
 
     private float getRestingRadius() {
