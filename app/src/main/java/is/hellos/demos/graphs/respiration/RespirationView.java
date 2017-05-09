@@ -12,6 +12,8 @@ import android.support.v4.graphics.ColorUtils;
 import android.util.AttributeSet;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+import java.util.Locale;
+
 import is.hellos.demos.R;
 import is.hellos.demos.graphs.GraphDrawable;
 import is.hellos.demos.graphs.GraphView;
@@ -119,6 +121,17 @@ public class RespirationView extends GraphView
         return Math.min(radius * scale, getMaxRadius());
     }
 
+    String getUnknownBreathRate() {
+        return "--";
+    }
+
+    String getFormattedBreathRate() {
+        if (currentRespirationStat == null) {
+            return getUnknownBreathRate();
+        }
+        return String.format(Locale.US, "%.0f",this.currentRespirationStat.getBreathsPerMinute());
+    }
+
     @ColorInt
     int getExpandingCircleColor(@FloatRange(from = 0, to = 1.0f) final float fraction) {
         return ColorUtils.blendARGB(restingColor, activeColor, fraction);
@@ -131,7 +144,12 @@ public class RespirationView extends GraphView
 
     @Override
     public GraphDrawable getGraphDrawable() {
-        final RespirationDrawable drawable = new RespirationDrawable(getWidth(), getHeight(), getRestingRadius());
+        final RespirationDrawable drawable = new RespirationDrawable(
+                getWidth(),
+                getHeight(),
+                getRestingRadius(),
+                getUnknownBreathRate()
+                );
         drawable.setInnerCircleColor(getInnerCircleColor());
         return drawable;
     }
@@ -142,6 +160,7 @@ public class RespirationView extends GraphView
         respirationDrawable.setInnerCircleColor(getInnerCircleColor());
         respirationDrawable.setExpandingCircleColor(getExpandingCircleColor(animation.getAnimatedFraction()));
         respirationDrawable.setRadius((float) animation.getAnimatedValue());
+        respirationDrawable.setBreathRateText(getFormattedBreathRate());
         respirationDrawable.invalidateSelf();
     }
 }
