@@ -8,12 +8,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
 import butterknife.BindView;
 import is.hellos.demos.R;
 import is.hellos.demos.graphs.waves.WaveGraphView;
@@ -54,12 +48,6 @@ public class WaveActivity extends BaseActivity
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-    }
-
-    @Override
     public void onConnecting() {
         // stateTextView.setText(R.string.state_connecting);
 
@@ -74,7 +62,6 @@ public class WaveActivity extends BaseActivity
     @Override
     public void onDisconnected() {
         // stateTextView.setText(R.string.state_disconnected);
-
     }
 
 
