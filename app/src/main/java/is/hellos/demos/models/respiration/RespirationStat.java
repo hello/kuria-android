@@ -40,7 +40,8 @@ public class RespirationStat {
     }
 
     public float getBreathsPerMinute() {
-        return 60  / Math.max(breathDurationSeconds, 0);
+
+        return 60  / Math.max(breathDurationSeconds, 0.05f);
     }
 
     public float getStandardDevBPM() {
