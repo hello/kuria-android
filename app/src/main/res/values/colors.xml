@@ -13,4 +13,5 @@
     <color name="respiration_expanding_circle">@color/blue3</color>
     <color name="respiration_inner_circle_active">@color/blue5</color>
     <color name="respiration_inner_circle_inactive">@color/dim</color>
+    <color name="respiration_expanding_circle_inactive">@color/gray2</color>
 </resources>

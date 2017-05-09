@@ -39,6 +39,8 @@ public class RespirationView extends GraphView
     private final int restingColor;
     @ColorInt
     private final int inactiveColor;
+    @ColorInt
+    private final int inactiveSecondaryColor;
     @Nullable
     private RespirationStat currentRespirationStat;
 
@@ -55,6 +57,7 @@ public class RespirationView extends GraphView
         this.activeColor = ContextCompat.getColor(context, R.color.respiration_expanding_circle);
         this.restingColor = ContextCompat.getColor(context, R.color.respiration_inner_circle_active);
         this.inactiveColor = ContextCompat.getColor(context, R.color.respiration_inner_circle_inactive);
+        this.inactiveSecondaryColor = ContextCompat.getColor(context, R.color.respiration_expanding_circle_inactive);
         this.animator = ValueAnimator.ofFloat(0, 1);
         animator.setInterpolator(new AccelerateDecelerateInterpolator(context, attrs));
         animator.setDuration(DEFAULT_DURATION_MS);
@@ -104,11 +107,14 @@ public class RespirationView extends GraphView
             return;
         }
 
+        final float targetRadius = getValidScaledRadius(respirationStat.getEnergyDb(), RADIUS_SCALE);
+        final float restingRadius = getRestingRadius();
+
         //scaled radius end value
         this.animator.setFloatValues(
-                getRestingRadius(),
-                getValidScaledRadius(respirationStat.getEnergyDb(), RADIUS_SCALE),
-                getRestingRadius()
+                restingRadius,
+                targetRadius,
+                restingRadius
         );
         // calculate duration to match respiration BPM where one full round approx one breath (inhale + exhale)
         this.animator.setDuration( (long) (respirationStat.getBreathDurationSeconds() * 1000));
@@ -150,12 +156,20 @@ public class RespirationView extends GraphView
 
     @ColorInt
     int getExpandingCircleColor(@FloatRange(from = 0, to = 1.0f) final float fraction) {
-        return ColorUtils.blendARGB(restingColor, activeColor, fraction);
+        if (this.currentRespirationStat != null && this.currentRespirationStat.isHasRespiration()) {
+            return ColorUtils.blendARGB(restingColor, activeColor, fraction);
+        } else {
+            return inactiveSecondaryColor;
+        }
     }
 
     @ColorInt
     int getInnerCircleColor() {
-        return restingColor;
+        if (this.currentRespirationStat != null && this.currentRespirationStat.isHasRespiration()) {
+            return restingColor;
+        } else {
+            return inactiveColor;
+        }
     }
 
     @Override
