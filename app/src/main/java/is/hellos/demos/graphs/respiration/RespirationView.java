@@ -8,6 +8,7 @@ import android.support.annotation.FloatRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.graphics.ColorUtils;
 import android.util.AttributeSet;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -15,6 +16,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import java.util.Locale;
 
 import is.hellos.demos.R;
+import is.hellos.demos.activities.RespirationActivity;
 import is.hellos.demos.graphs.GraphDrawable;
 import is.hellos.demos.graphs.GraphView;
 import is.hellos.demos.models.respiration.RespirationStat;
@@ -28,7 +30,7 @@ public class RespirationView extends GraphView
 
     private final static float RESTING_SCALE = 0.1f;
     private static final float MAX_SCALE = 0.9f;
-    private static final float RADIUS_SCALE = 10;
+    private static final float RADIUS_SCALE = 20;
     private final static long DEFAULT_DURATION_MS = 1000;
     private final ValueAnimator animator;
     @ColorInt
@@ -78,6 +80,12 @@ public class RespirationView extends GraphView
             @Override
             public void onAnimationRepeat(Animator animation) {
                 updateAnimator(currentRespirationStat);
+                postOnAnimationDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        RespirationView.this.sendRespirationBroadcast();
+                    }
+                }, animation.getDuration() / 2);
             }
         });
     }
@@ -130,6 +138,14 @@ public class RespirationView extends GraphView
             return getUnknownBreathRate();
         }
         return String.format(Locale.US, "%.0f",this.currentRespirationStat.getBreathsPerMinute());
+    }
+
+    private void sendRespirationBroadcast() {
+        if (this.currentRespirationStat == null) {
+            return;
+        }
+        LocalBroadcastManager.getInstance(getContext())
+                .sendBroadcast(RespirationActivity.RespirationBroadcastReceiver.getIntent(this.currentRespirationStat));
     }
 
     @ColorInt
