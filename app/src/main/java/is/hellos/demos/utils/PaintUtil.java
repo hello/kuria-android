@@ -127,4 +127,18 @@ public class PaintUtil {
         return new Pair<>(rect.left + x + dx, rect.top + y + dy);
     }
 
+    public static void drawAndCenterText(@NonNull final Canvas canvas,
+                                         @NonNull final Paint paint,
+                                         @NonNull final String text) {
+        final Rect textBounds = new Rect();
+        paint.getTextBounds(text, 0, text.length(), textBounds);
+        canvas.getClipBounds(textBounds);
+        final float cHeight = textBounds.height();
+        final float cWidth = textBounds.width();
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.getTextBounds(text, 0, text.length(), textBounds);
+        final float x = cWidth / 2f - textBounds.width() / 2f - textBounds.left;
+        final float y = cHeight / 2f + textBounds.height() / 2f - textBounds.bottom;
+        canvas.drawText(text, x, y, paint);
+    }
 }
