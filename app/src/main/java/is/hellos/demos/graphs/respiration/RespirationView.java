@@ -134,14 +134,14 @@ public class RespirationView extends GraphView
     }
 
     String getFormattedBreathRate() {
-        if (currentRespirationStat == null) {
+        if (currentRespirationStat == null || !currentRespirationStat.isHasRespiration()) {
             return getUnknownBreathRate();
         }
         return String.format(Locale.US, "%.0f",this.currentRespirationStat.getBreathsPerMinute());
     }
 
     private void sendRespirationBroadcast() {
-        if (this.currentRespirationStat == null) {
+        if (this.currentRespirationStat == null || !this.currentRespirationStat.isHasRespiration()) {
             return;
         }
         LocalBroadcastManager.getInstance(getContext())
