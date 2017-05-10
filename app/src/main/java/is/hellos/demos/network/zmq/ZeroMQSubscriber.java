@@ -106,6 +106,8 @@ public class ZeroMQSubscriber implements Runnable {
             Log.e(ZeroMQSubscriber.class.getSimpleName(),
                     String.format("action=run() Exception while subscribed to topic %s at ip address %s",topic, ipAddress),
                     e);
+        }finally {
+            stop();
         }
     }
 
