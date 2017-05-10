@@ -1,9 +1,10 @@
 package is.hellos.demos.models.wave;
 
+import static is.hellos.demos.models.wave.Waves.SECONDS_TO_TRACK;
+import static is.hellos.demos.models.wave.Waves.SEGMENTS_PER_SECOND;
+
 public class WaveList {
 
-    private static final int SEGMENTS_PER_SECOND = 20;
-    private static final int SECONDS_TO_TRACK = 5;
 
     private static final int LENGTH = SEGMENTS_PER_SECOND * SECONDS_TO_TRACK;
 

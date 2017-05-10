@@ -27,4 +27,18 @@
         android:padding="24dp"
         android:text="Wave Graph 1" />
 
+    <TextView
+        android:id="@+id/activity_textview_time_graph_one"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp"
+        android:text="Time Graph 1" />
+
+    <TextView
+        android:id="@+id/activity_textview_respiration_graph"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp"
+        android:text="Respiration Graph" />
+
 </LinearLayout>

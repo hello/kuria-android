@@ -16,6 +16,7 @@ public class WaveGraphView extends GraphView {
     private static final long DELTA_MS = 1000 / FPS;
 
     private long lastUpdate = 0;
+    public int updates = 0;
 
     public WaveGraphView(final Context context) {
         super(context);
@@ -46,7 +47,14 @@ public class WaveGraphView extends GraphView {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (System.currentTimeMillis() - lastUpdate > DELTA_MS) {
+            if (updates > 10){
+                updates = 0;
+            //    ((WaveDrawable) getBackground()).update(3, -3);
+            }else {
+                ((WaveDrawable) getBackground()).update(0, 0);
+            }
             ((WaveDrawable) getBackground()).update(0, 0);
+            updates++;
         }
         postInvalidateDelayed(DELTA_MS);
     }

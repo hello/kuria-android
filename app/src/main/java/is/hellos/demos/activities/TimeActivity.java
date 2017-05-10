@@ -1,40 +1,44 @@
 package is.hellos.demos.activities;
 
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+
 import butterknife.BindView;
 import is.hellos.demos.R;
-import is.hellos.demos.graphs.waves.WaveGraphView;
+import is.hellos.demos.graphs.time.TimeGraphView;
 import is.hellos.demos.models.protos.RadarMessages;
 import is.hellos.demos.network.zmq.ZeroMQSubscriber;
 
-public class WaveActivity extends BaseActivity
+public class TimeActivity extends BaseActivity
         implements ZeroMQSubscriber.Listener {
 
-    @BindView(R.id.activity_wave_state)
+    @BindView(R.id.activity_time_state)
     TextView stateTextView;
-    @BindView(R.id.activity_wave_action)
+    @BindView(R.id.activity_time_action)
     Button actionButton;
-    @BindView(R.id.activity_wave_graph)
-    WaveGraphView waveGraphView;
+    @BindView(R.id.activity_time_graph)
+    TimeGraphView timeGraphView;
     private final Handler handler = new Handler();
     private boolean pauseOutput;
 
     @Override
     protected int getLayoutRes() {
-        return R.layout.activity_wave;
+        return R.layout.activity_time;
     }
 
     @Override
     protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        final ZeroMQSubscriber zeroMQSubscriber = new ZeroMQSubscriber(ZeroMQSubscriber.PLOT_TOPIC);
+        final ZeroMQSubscriber zeroMQSubscriber = new ZeroMQSubscriber(ZeroMQSubscriber.BASEBAND_TOPIC);
         zeroMQSubscriber.setListener(this);
         new Thread(zeroMQSubscriber).start();
         updateUI();
@@ -45,6 +49,12 @@ public class WaveActivity extends BaseActivity
                 updateUI();
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
     }
 
     @Override
@@ -62,6 +72,7 @@ public class WaveActivity extends BaseActivity
     @Override
     public void onDisconnected() {
         // stateTextView.setText(R.string.state_disconnected);
+
     }
 
 
@@ -74,21 +85,12 @@ public class WaveActivity extends BaseActivity
                     if (pauseOutput) {
                         return;
                     }
-
                     RadarMessages.FeatureVector featureVector = RadarMessages.FeatureVector.parseFrom(message);
-
-                    if (!featureVector.hasId()) {
-                        return;
-                    }
-
-                    if (!featureVector.getId().equals("maxvarresp")) {
-                        return;
-                    }
-
                     String output = featureVector.toString();
                     stateTextView.setText(output);
-                    waveGraphView.update(featureVector.getFloatfeats(0), featureVector.getFloatfeats(1));
-                } catch (Exception e) {
+                    //   Log.e(RadarActivity.class.getSimpleName(), output);
+                    timeGraphView.addValue(featureVector.getFloatfeats(0), featureVector.getFloatfeats(1));
+                } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
                 }
             }

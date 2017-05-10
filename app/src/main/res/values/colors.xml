@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorPrimary">@color/primary</color>
+    <color name="colorPrimaryDark">@color/blue7</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="dim">@color/gray3</color>
+    <color name="primary">@color/blue6</color>
+    <color name="error">@color/red6</color>
+    <color name="warning">@color/yellow6</color>
+    <color name="success">@color/green6</color>
+
+    <color name="respiration_expanding_circle">@color/blue3</color>
+    <color name="respiration_inner_circle_active">@color/blue5</color>
+    <color name="respiration_inner_circle_inactive">@color/dim</color>
+    <color name="respiration_expanding_circle_inactive">@color/gray2</color>
 </resources>

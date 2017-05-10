@@ -15,7 +15,7 @@ import is.hellos.demos.utils.PaintUtil;
 
 public class WaveDrawable extends GraphDrawable {
 
-    private static final float MAX = 5;
+    private static final float MAX = 5f;
     private final Paint basePaint = PaintUtil.createGraphPaint(175, 155, 155, 155);
     private final Paint feat1Paint = PaintUtil.createGraphPaint(255, 200, 55, 55);
     private final Paint feat2Paint = PaintUtil.createGraphPaint(255, 55, 55, 200);
@@ -43,11 +43,9 @@ public class WaveDrawable extends GraphDrawable {
     }
 
     @Override
-    public void draw(@NonNull Canvas canvas) {/*
-        canvas.drawPaint(backgroundPaint);
-        canvas.drawRect(0, baseLine - 2, canvas.getWidth(), baseLine + 2, basePaint);*/
+    public void draw(@NonNull Canvas canvas) {
         final int size = waves.getSize();
-        if (size == 0) {
+        if (size <= 0) {
             return;
         }
         Wave feat1 = waves.getFeat1Root();
@@ -60,26 +58,26 @@ public class WaveDrawable extends GraphDrawable {
         feat1Path.moveTo(0, baseLine);
         feat2Path.moveTo(0, baseLine);
         float height;
-        while (feat1 != null && feat2 != null && count < size-2) {
+        while (feat1 != null && feat2 != null && count < size) {
             height = calculateHeight(feat1.getValue());
             if (height != 0) {
                 feat1Path.lineTo(count * segmentWidth, height);
             }else {
-                feat1Path.moveTo(count * segmentWidth, height);
+               // feat1Path.moveTo(count * segmentWidth, height);
             }
             height = calculateHeight(feat2.getValue());
             if (height != 0) {
                 feat2Path.lineTo(count * segmentWidth, height);
             } else {
-                feat2Path.moveTo(count * segmentWidth, height);
+              //  feat2Path.moveTo(count * segmentWidth, height);
             }
             count++;
             feat1 = feat1.getNext();
             feat2 = feat2.getNext();
         }
 
-        canvas.drawPath(feat1Path, wavePaint);
-        canvas.drawPath(feat2Path, wavePaint);
+        canvas.drawPath(feat1Path, feat1Paint);
+        canvas.drawPath(feat2Path, feat2Paint);
 
     }
 
