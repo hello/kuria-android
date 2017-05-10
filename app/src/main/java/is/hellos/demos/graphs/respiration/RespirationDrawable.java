@@ -22,7 +22,6 @@ public class RespirationDrawable extends GraphDrawable {
     private Paint expandingCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private TextPaint breathRateTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private String breathRateText;
-    private int innerCircleColor;
 
     public RespirationDrawable(int width, int height, float radius, String initialBreathRate) {
         super(width, height);

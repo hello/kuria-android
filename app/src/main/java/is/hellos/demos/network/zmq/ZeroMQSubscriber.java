@@ -116,7 +116,7 @@ public class ZeroMQSubscriber implements Runnable {
             socket.close();
             context.term();
             this.listener.onDisconnected();
-        } catch (ZMQException.IOException e) {
+        } catch (Exception e) {
             Log.e(ZeroMQSubscriber.class.getSimpleName(),
                     String.format("action=stop() Exception while subscribed to topic %s at ip address %s",topic, ipAddress),
                     e);

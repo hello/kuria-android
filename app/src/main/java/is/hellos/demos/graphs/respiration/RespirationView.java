@@ -19,6 +19,7 @@ import is.hellos.demos.R;
 import is.hellos.demos.broadcastreceivers.HapticFeedbackBroadcastReceiver;
 import is.hellos.demos.graphs.GraphDrawable;
 import is.hellos.demos.graphs.GraphView;
+import is.hellos.demos.models.respiration.RespirationProb;
 import is.hellos.demos.models.respiration.RespirationStat;
 
 /**
@@ -29,8 +30,7 @@ public class RespirationView extends GraphView
         implements ValueAnimator.AnimatorUpdateListener {
 
     private final static float RESTING_SCALE = 0.1f;
-    private static final float MAX_SCALE = 0.9f;
-    private static final float RADIUS_SCALE = 20;
+    private static final float MAX_SCALE = 0.4f;
     private final static long DEFAULT_DURATION_MS = 1000;
     private final ValueAnimator animator;
     private ValueAnimator colorAnimator;
@@ -44,6 +44,8 @@ public class RespirationView extends GraphView
     private final int inactiveSecondaryColor;
     @Nullable
     private RespirationStat currentRespirationStat;
+    @Nullable
+    private RespirationProb currentRespirationProb;
 
     public RespirationView(Context context) {
         this(context, null);
@@ -83,7 +85,8 @@ public class RespirationView extends GraphView
 
             @Override
             public void onAnimationRepeat(Animator animation) {
-                updateAnimator(currentRespirationStat);
+                updateDrawable(currentRespirationProb);
+                updateDuration(currentRespirationStat);
                 postOnAnimationDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -92,6 +95,39 @@ public class RespirationView extends GraphView
                 }, animation.getDuration() / 2);
             }
         });
+    }
+
+    public void update(RespirationProb respirationProb) {
+        this.currentRespirationProb = respirationProb;
+        updateDrawable(respirationProb);
+    }
+
+    private void updateDrawable(@Nullable final RespirationProb respirationProb) {
+        if (respirationProb == null) {
+            return;
+        }
+        final float targetRadius = getValidInterpolatedRadius(respirationProb.getInhaling());
+        final RespirationDrawable respirationDrawable = (RespirationDrawable) getBackground();
+        respirationDrawable.setRadius(targetRadius);
+        respirationDrawable.setExpandingCircleColor(getExpandingCircleColor(respirationProb.getInhaling()));
+
+    }
+
+    public void update(@NonNull final RespirationStat respirationStat) {
+        this.currentRespirationStat = respirationStat;
+
+        if (this.colorAnimator != null && this.colorAnimator.isRunning()) {
+            this.colorAnimator.end();
+        }
+
+        this.colorAnimator = createColorAnimator(respirationStat);
+        this.colorAnimator.start();
+
+        if (this.animator.isRunning()) {
+            return;
+        }
+
+        updateDuration(respirationStat);
     }
 
     ValueAnimator createColorAnimator(@NonNull final RespirationStat respirationStat) {
@@ -112,40 +148,15 @@ public class RespirationView extends GraphView
         return colorAnimator;
     }
 
-    public void update(@NonNull final RespirationStat respirationStat) {
-        this.currentRespirationStat = respirationStat;
-
-        if (this.colorAnimator != null && this.colorAnimator.isRunning()) {
-            this.colorAnimator.end();
-        }
-
-        this.colorAnimator = createColorAnimator(respirationStat);
-        this.colorAnimator.start();
-
-        if (this.animator.isRunning()) {
-            return;
-        }
-
-        updateAnimator(respirationStat);
-    }
-
-    private void updateAnimator(@Nullable final RespirationStat respirationStat) {
+    private void updateDuration(@Nullable final RespirationStat respirationStat) {
         if (respirationStat == null) {
             return;
         }
-
-        final float targetRadius = getValidScaledRadius(respirationStat.getEnergyDb(), RADIUS_SCALE);
-        final float restingRadius = getRestingRadius();
-
-        //scaled radius end value
-        this.animator.setFloatValues(
-                restingRadius,
-                targetRadius,
-                restingRadius
-        );
         // calculate duration to match respiration BPM where one full round approx one breath (inhale + exhale)
         this.animator.setDuration( (long) (respirationStat.getBreathDurationSeconds() * 1000));
-
+        final RespirationDrawable respirationDrawable = (RespirationDrawable) getBackground();
+        respirationDrawable.setBreathRateText(getFormattedBreathRate());
+        //todo move start elsewhere
         this.animator.start();
     }
 
@@ -157,8 +168,8 @@ public class RespirationView extends GraphView
         return Math.min(getWidth(), getHeight()) * MAX_SCALE;
     }
 
-    float getValidScaledRadius(final float radius, final float scale) {
-        return Math.min(radius * scale, getMaxRadius());
+    float getValidInterpolatedRadius(@FloatRange(from = 0, to = 1) final float value) {
+        return (1 - value) * getRestingRadius() + value * getMaxRadius();
     }
 
     String getUnknownBreathRate() {
@@ -214,10 +225,6 @@ public class RespirationView extends GraphView
     @Override
     public void onAnimationUpdate(ValueAnimator animation) {
         final RespirationDrawable respirationDrawable = (RespirationDrawable) getBackground();
-
-        respirationDrawable.setExpandingCircleColor(getExpandingCircleColor(animation.getAnimatedFraction()));
-        respirationDrawable.setRadius((float) animation.getAnimatedValue());
-        respirationDrawable.setBreathRateText(getFormattedBreathRate());
         respirationDrawable.invalidateSelf();
     }
 }
