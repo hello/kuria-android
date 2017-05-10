@@ -34,6 +34,16 @@ public class ZeroMQSubscriber implements Runnable {
        3 is boolean is has respiration
      */
     public static final String RESPIRATION_STATS_TOPIC = "v1/respiration_stats";
+
+    /**
+     * {@link is.hellos.demos.models.protos.RespirationHealth.RespirationStatus}
+     * {@link is.hellos.demos.models.protos.RespirationHealth.ResiprationHealthState}
+     * 0 - no one
+     * 1 - someone breathing
+     * 2 - someone not breathing
+     */
+    private static final String BABY_STATE_TOPIC = "v1/baby_state";
+    private static final String BABY_STATE_IP_ADDRESS = "tcp://192.168.128.40:5565";
   //  private static final String IP_ADDRESS = "tcp://192.168.128.119:5564";
     private static final String IP_ADDRESS = "tcp://192.168.129.43:5564";
 
@@ -65,6 +75,10 @@ public class ZeroMQSubscriber implements Runnable {
     private final String ipAddress;
     private ZMQ.Context context;
     private ZMQ.Socket socket;
+
+    public static ZeroMQSubscriber getBabyStateSubscriber() {
+        return new ZeroMQSubscriber(BABY_STATE_TOPIC, BABY_STATE_IP_ADDRESS);
+    }
 
     public ZeroMQSubscriber(@NonNull final String topic) {
         this(topic, IP_ADDRESS);

@@ -16,7 +16,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import java.util.Locale;
 
 import is.hellos.demos.R;
-import is.hellos.demos.activities.RespirationActivity;
+import is.hellos.demos.broadcastreceivers.HapticFeedbackBroadcastReceiver;
 import is.hellos.demos.graphs.GraphDrawable;
 import is.hellos.demos.graphs.GraphView;
 import is.hellos.demos.models.respiration.RespirationStat;
@@ -176,8 +176,9 @@ public class RespirationView extends GraphView
         if (this.currentRespirationStat == null || !this.currentRespirationStat.isHasRespiration()) {
             return;
         }
+        final long duration = (long) this.currentRespirationStat.getBreathDurationSeconds() * 100;
         LocalBroadcastManager.getInstance(getContext())
-                .sendBroadcast(RespirationActivity.RespirationBroadcastReceiver.getIntent(this.currentRespirationStat));
+                .sendBroadcast(HapticFeedbackBroadcastReceiver.getIntent(duration));
     }
 
     @ColorInt

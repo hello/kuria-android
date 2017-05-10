@@ -1,9 +1,5 @@
 package is.hellos.demos.activities;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -13,6 +9,7 @@ import android.widget.TextView;
 
 import butterknife.BindView;
 import is.hellos.demos.R;
+import is.hellos.demos.broadcastreceivers.HapticFeedbackBroadcastReceiver;
 import is.hellos.demos.graphs.respiration.RespirationView;
 import is.hellos.demos.models.protos.RadarMessages;
 import is.hellos.demos.models.respiration.RespirationStat;
@@ -31,7 +28,7 @@ implements ZeroMQSubscriber.Listener{
     private long lastUpdatedMillis = System.currentTimeMillis();
 
     private HapticUtil hapticUtil;
-    private RespirationBroadcastReceiver respirationBroadcastReceiver;
+    private HapticFeedbackBroadcastReceiver hapticFeedbackBroadcastReceiver;
     private Handler handler = new Handler();
     @BindView(R.id.activity_respiration_state_text_view)
     TextView stateTextView;
@@ -53,25 +50,24 @@ implements ZeroMQSubscriber.Listener{
                                                     );
         this.zeroMQSubscriber.setListener(this);
         this.hapticUtil = new HapticUtil(this);
-        this.respirationBroadcastReceiver = new RespirationBroadcastReceiver(hapticUtil);
+        this.hapticFeedbackBroadcastReceiver = new HapticFeedbackBroadcastReceiver(hapticUtil);
         final Thread subscriberThread = new Thread(zeroMQSubscriber);
         subscriberThread.start();
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                this.respirationBroadcastReceiver,
-                RespirationBroadcastReceiver.getIntentFilter());
+                this.hapticFeedbackBroadcastReceiver,
+                HapticFeedbackBroadcastReceiver.getIntentFilter());
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(
-                this.respirationBroadcastReceiver);
+                this.hapticFeedbackBroadcastReceiver);
 
     }
 
@@ -88,8 +84,8 @@ implements ZeroMQSubscriber.Listener{
             this.zeroMQSubscriber = null;
         }
 
-        if (this.respirationBroadcastReceiver != null) {
-            this.respirationBroadcastReceiver = null;
+        if (this.hapticFeedbackBroadcastReceiver != null) {
+            this.hapticFeedbackBroadcastReceiver = null;
         }
     }
 
@@ -159,30 +155,4 @@ implements ZeroMQSubscriber.Listener{
         });
     }
 
-    public static class RespirationBroadcastReceiver extends BroadcastReceiver {
-        private static final String RESPIRATION_ACTION = RespirationBroadcastReceiver.class.getSimpleName() + "_RESPIRATION_ACTION";
-        private static final String EXTRA_DURATION = RespirationBroadcastReceiver.class.getSimpleName() + "_DURATION_EXTRA";
-
-        private final HapticUtil hapticUtil;
-
-        public static IntentFilter getIntentFilter() {
-            return new IntentFilter(RESPIRATION_ACTION);
-        }
-
-        public static Intent getIntent(@NonNull final RespirationStat respirationStat) {
-            return new Intent(RESPIRATION_ACTION).putExtra(EXTRA_DURATION, respirationStat.getBreathDurationSeconds() * 100);
-        }
-
-        RespirationBroadcastReceiver(HapticUtil hapticUtil) {
-            this.hapticUtil = hapticUtil;
-        }
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (RESPIRATION_ACTION.equals(intent.getAction())) {
-                final long duration = (long) intent.getFloatExtra(EXTRA_DURATION, 0);
-                hapticUtil.vibrate(duration);
-            }
-        }
-    }
 }
