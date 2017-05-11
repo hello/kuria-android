@@ -7,14 +7,16 @@ import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextPaint;
-import android.util.Log;
 import android.util.Pair;
 
 import is.hellos.demos.graphs.GraphDrawable;
+import is.hellos.demos.models.time.Node;
+import is.hellos.demos.models.time.NodeController;
 import is.hellos.demos.utils.PaintUtil;
 
 
-public class TimeDrawable extends GraphDrawable {
+public class TimeDrawable extends GraphDrawable
+        implements NodeController.MaxTracker {
     /**
      * Y space this axis should consume.
      */
@@ -32,7 +34,6 @@ public class TimeDrawable extends GraphDrawable {
      */
     private TimeAxis timeAxis;
 
-    private final int framesPerSecond;
     private final float columnWidth;
     private final float baseLine;
     private float maxValue = 0;
@@ -46,31 +47,80 @@ public class TimeDrawable extends GraphDrawable {
     private final Path path = new Path();
 
     public TimeDrawable(final int width,
-                        final int height,
-                        final int framesPerSecond) {
+                        final int height) {
         super(width, height);
         for (int i = 0; i < paints.length; i++) {
             paints[i] = PaintUtil.createDashedPathPaint(i * 6);
 
         }
-        this.framesPerSecond = framesPerSecond;
         this.baseLine = (getIntrinsicHeight() - (getIntrinsicHeight() * TIME_AXIS_HEIGHT_RATIO)) / 2;
         this.baseLinePath.moveTo(0, this.baseLine);
         this.baseLinePath.lineTo(width, this.baseLine);
         this.columnWidth = getIntrinsicWidth() / NUM_OF_SEC;
         this.timeAxis = new TimeAxis();
-        this.feat1 = new NodeController(PaintUtil.getPathPaint(220, 200, 30, 20));
-        this.feat2 = new NodeController(PaintUtil.getPathPaint(200, 20, 50, 170));
-
-
+        this.feat1 = new NodeController(NUM_OF_MSEC,PaintUtil.getPathPaint(220, 200, 30, 20), this);
+        this.feat2 = new NodeController(NUM_OF_MSEC,PaintUtil.getPathPaint(200, 20, 50, 170), this);
     }
 
     @Override
     public void draw(@NonNull Canvas canvas) {
         canvas.drawPath(baseLinePath, paints[paintPointer]);
         incrementPaintPointer();
-        feat1.draw(canvas);
-        feat2.draw(canvas);
+        drawNodeController(canvas, feat1);
+        drawNodeController(canvas, feat2);
+    }
+
+    @Override
+    public void setMaxValue(final float value) {
+        this.maxValue = Math.abs(value);
+    }
+
+    @Override
+    public boolean isGreaterThanMaxValue(final float value) {
+        return Math.abs(value) > maxValue;
+    }
+
+    private void drawNodeController(@NonNull final Canvas canvas,
+                                   @NonNull final NodeController nodeController) {
+        final long currentTime = System.currentTimeMillis();
+        Node ptr = nodeController.getRoot();
+        timeAxis.draw(canvas);
+        path.reset();
+        path.moveTo(0, baseLine);
+        while (ptr != null) {
+            final Pair<Float, Float> position = getCoords(currentTime, ptr);
+            if (position != null) {
+                path.moveTo(position.first, position.second);
+                ptr = ptr.getNext();
+                break;
+            }
+            ptr = ptr.getNext();
+        }
+        while (ptr != null) {
+            final Pair<Float, Float> position = getCoords(currentTime, ptr);
+            if (position != null) {
+                path.lineTo(position.first, position.second);
+            }
+            ptr = ptr.getNext();
+        }
+        canvas.drawPath(path, nodeController.getPathPaint());
+
+    }
+
+    @Nullable
+    private Pair<Float, Float> getCoords(final long currentTime,
+                                        @NonNull final Node node) {
+        final long dTime = currentTime - node.getSegment();
+        if (dTime <= NUM_OF_MSEC) {
+            final float timeRatio = (dTime / NUM_OF_MSEC);
+            final float x = getIntrinsicWidth() - (getIntrinsicWidth() * timeRatio);
+            final float y = getHeightFor(node.getValue());
+            if (y == -1) {
+                return null;
+            }
+            return new Pair<>(x, y);
+        }
+        return null;
     }
 
     void addNode(final long time,
@@ -90,14 +140,6 @@ public class TimeDrawable extends GraphDrawable {
         } else {
             paintPointer += 1;
         }
-    }
-
-    private void setMaxValue(final float value) {
-        this.maxValue = Math.abs(value);
-    }
-
-    private boolean isGreaterThanMaxValue(final float value) {
-        return Math.abs(value) > maxValue;
     }
 
     /**
@@ -173,117 +215,5 @@ public class TimeDrawable extends GraphDrawable {
 
     }
 
-    private class NodeController {
-        private final Paint pathPaint;
-        private Node root;
-        private Node tail;
-        private int numOfNodes = 0;
-
-        private NodeController(Paint paint) {
-            this.pathPaint = paint;
-            initialize();
-        }
-
-        private synchronized void initialize() {
-            if (root == null || numOfNodes == 0) {
-                root = new Node(System.currentTimeMillis(), 10);
-                tail = root;
-                numOfNodes = 1;
-            }
-        }
-
-        private synchronized void addNode(final long time,
-                                          final float value) {
-            if (Math.abs(value) > 2) {
-                return;
-            }
-            if (isGreaterThanMaxValue(value)) {
-                setMaxValue(value);
-            }
-            this.tail.next = new Node(time, value);
-            this.tail = tail.next;
-            numOfNodes += 1;
-
-            boolean findMaxValue = false;
-            final long currentTime = System.currentTimeMillis();
-            final long minTime = currentTime - (long) NUM_OF_MSEC;
-            while (root != null && root.segment < minTime) {
-                if (isGreaterThanMaxValue(root.value)) {
-                    findMaxValue = true;
-                    setMaxValue(0);
-                    Log.e(getClass().getSimpleName(), "Find new max value");
-                }
-                root = root.next;
-                numOfNodes--;
-            }
-            initialize();
-            if (findMaxValue) {
-                Node ptr = root;
-                while (ptr != null) {
-                    if (isGreaterThanMaxValue(ptr.value)) {
-                        setMaxValue(ptr.value);
-                        Log.e(getClass().getSimpleName(), "max value: " + maxValue);
-
-                    }
-                    ptr = ptr.next;
-                }
-            }
-        }
-
-        private void draw(@NonNull final Canvas canvas) {
-            final long currentTime = System.currentTimeMillis();
-            Node ptr = root;
-            timeAxis.draw(canvas);
-            path.reset();
-            path.moveTo(0, baseLine);
-            while (ptr != null) {
-                final Pair<Float, Float> position = ptr.getCoords(currentTime);
-                if (position != null) {
-                    path.moveTo(position.first, position.second);
-                    ptr = ptr.next;
-                    break;
-                }
-                ptr = ptr.next;
-            }
-            while (ptr != null) {
-                final Pair<Float, Float> position = ptr.getCoords(currentTime);
-                if (position != null) {
-                    path.lineTo(position.first, position.second);
-                }
-                ptr = ptr.next;
-            }
-            canvas.drawPath(path, pathPaint);
-
-        }
-    }
-
-    private class Node {
-        private final long segment;
-        private final float value;
-        private Node next;
-
-        public Node(final long segment,
-                    final float value) {
-            this.segment = segment;
-            this.value = value;
-        }
-
-
-        @Nullable
-        public Pair<Float, Float> getCoords(final long currentTime) {
-            final long dTime = currentTime - segment;
-            if (dTime <= NUM_OF_MSEC) {
-                final float timeRatio = (dTime / NUM_OF_MSEC);
-                final float x = getIntrinsicWidth() - (getIntrinsicWidth() * timeRatio);
-                final float y = getHeightFor(value);
-                if (y == -1) {
-                    return null;
-                }
-                return new Pair<>(x, y);
-            }
-            return null;
-        }
-
-    }
 
 }

@@ -11,10 +11,8 @@ import is.hellos.demos.graphs.GraphView;
 public class TimeGraphView extends GraphView {
     private static final int FPS = 30;
     private static final long DELTA_MS = 1000 / FPS;
-
-    private long lastUpdate = 0;
-    private long lastAdd = 0;
-    public int updates = 0;
+    private static final long DELTA_MSX2 = DELTA_MS *2;
+    private static long lastUpdate = 0;
 
     public TimeGraphView(final Context context) {
         super(context);
@@ -35,21 +33,21 @@ public class TimeGraphView extends GraphView {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        //final long time = System.currentTimeMillis();
-        //if (time - lastUpdate > 1000) {
-        //  ((TimeDrawable) getBackground()).addNode(time, 10);
-        //  lastUpdate = System.currentTimeMillis();
-        // }
+        final long currentTime =System.currentTimeMillis();
+        if (currentTime - lastUpdate >=DELTA_MSX2 ){
+            addValue(0,0);
+        }
         postInvalidateDelayed(DELTA_MS);
     }
 
     @Override
     public GraphDrawable getGraphDrawable() {
-        return new TimeDrawable(getWidth(), getHeight(), FPS);
+        return new TimeDrawable(getWidth(), getHeight());
     }
 
     public void addValue(final float feat1,
                          final float feat2) {
+        lastUpdate = System.currentTimeMillis();
         ((TimeDrawable) getBackground()).addNode(System.currentTimeMillis(), feat1, feat2);
     }
 

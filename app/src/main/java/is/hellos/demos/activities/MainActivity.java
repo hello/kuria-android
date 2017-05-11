@@ -21,6 +21,8 @@ public class MainActivity extends BaseActivity {
 
     @BindView(R.id.activity_textview_respiration_graph)
     TextView respirationGraph;
+    @BindView(R.id.activity_textview_time_settings)
+    TextView settings;
 
     @Override
     protected int getLayoutRes() {
@@ -60,6 +62,13 @@ public class MainActivity extends BaseActivity {
                 startActivity(new Intent(MainActivity.this, RespirationActivity.class));
             }
         });
+        settings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+            }
+        });
+
 
     }
 
