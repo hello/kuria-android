@@ -5,9 +5,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import is.hellos.demos.R;
@@ -18,6 +21,7 @@ import is.hellos.demos.models.notification.Notification;
  */
 
 public class NotificationBroadcastReceiver extends BroadcastReceiver {
+    private static final long[] VIBRATION_PATTERN = new long[] {1000, 500, 1000};
     private static final String TAG = NotificationBroadcastReceiver.class.getSimpleName();
     private static final String ACTION_PUSH = NotificationBroadcastReceiver.class.getSimpleName() + "_ACTION_PUSH";
     private static final String ACTION_CANCEL = NotificationBroadcastReceiver.class.getSimpleName() + "_ACTION_CANCEL";
@@ -62,10 +66,26 @@ public class NotificationBroadcastReceiver extends BroadcastReceiver {
         builder.setSmallIcon(R.mipmap.ic_launcher);
         builder.setContentTitle(notification.getTitle());
         builder.setContentText(notification.getMsg());
-        builder.setContentIntent(PendingIntent.getActivity(context, 0,
+        builder.setCategory(android.app.Notification.CATEGORY_EVENT);
+
+        final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
                 activityIntent,
-                PendingIntent.FLAG_ONE_SHOT));
-        builder.setAutoCancel(true);
+                PendingIntent.FLAG_ONE_SHOT);
+
+        if (notification.isImportant()) {
+            builder.setFullScreenIntent(pendingIntent, true);
+            // audio visual stuff
+            builder.setLights(ContextCompat.getColor(context, R.color.error), 1000, 1000);
+            builder.setVibrate(VIBRATION_PATTERN);
+            final Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            builder.setSound(alarmSound);
+            builder.setOngoing(true);
+            builder.setAutoCancel(false);
+        } else {
+            builder.setContentIntent(pendingIntent);
+            builder.setOnlyAlertOnce(true);
+            builder.setAutoCancel(true);
+        }
 
         NotificationManagerCompat.from(context).notify(notification.getTag(),
                 builder.build());
