@@ -9,5 +9,7 @@
 
     <string name="notification_not_breathing_title">Respiration Not Detected</string>
     <string name="notification_not_breathing_msg">Please check on your dead baby. He or she may be dead.</string>
+    <string name="app_widget_name">Baby Monitor Widget</string>
+    <string name="app_widget_fake_message">Conner is sleeping soundly right now. There was slight motion in the crib 20 minutes ago.</string>
 </resources>
 
