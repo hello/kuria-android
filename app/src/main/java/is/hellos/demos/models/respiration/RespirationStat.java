@@ -55,4 +55,14 @@ public class RespirationStat {
     public boolean isHasRespiration() {
         return hasRespiration;
     }
+
+    @Override
+    public String toString() {
+        return "RespirationStat{"+
+                "\nbreathDurationSeconds=" + breathDurationSeconds +
+                ",\nstandardDevBPM=" + standardDevBPM +
+                ",\nenergyDb=" + energyDb +
+                ",\nhasRespiration=" + hasRespiration +
+                '}';
+    }
 }

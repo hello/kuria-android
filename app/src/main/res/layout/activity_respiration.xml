@@ -10,6 +10,16 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content" />
 
+    <TextView
+        android:id="@+id/activity_respiration_stats_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/activity_respiration_prob_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
     <is.hellos.demos.graphs.respiration.RespirationView
         android:id="@+id/activity_respiration_respiration_view"
         android:layout_width="match_parent"
