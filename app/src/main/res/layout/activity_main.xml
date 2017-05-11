@@ -6,6 +6,7 @@
     android:orientation="vertical"
     tools:context="is.hellos.demos.activities.MainActivity">
 
+
     <TextView
         android:id="@+id/activity_textview_radar_graph_one"
         android:layout_width="match_parent"
@@ -40,5 +41,12 @@
         android:layout_height="wrap_content"
         android:padding="24dp"
         android:text="Respiration Graph" />
+
+    <TextView
+        android:id="@+id/activity_textview_time_settings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp"
+        android:text="Settings" />
 
 </LinearLayout>

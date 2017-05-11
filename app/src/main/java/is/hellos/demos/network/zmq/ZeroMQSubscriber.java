@@ -1,5 +1,6 @@
 package is.hellos.demos.network.zmq;
 
+import android.os.NetworkOnMainThreadException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -116,7 +117,7 @@ public class ZeroMQSubscriber implements Runnable {
             socket.close();
             context.term();
             this.listener.onDisconnected();
-        } catch (ZMQException.IOException e) {
+        } catch (ZMQException.IOException | NetworkOnMainThreadException e) {
             Log.e(ZeroMQSubscriber.class.getSimpleName(),
                     String.format("action=stop() Exception while subscribed to topic %s at ip address %s",topic, ipAddress),
                     e);

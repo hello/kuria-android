@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
 import butterknife.ButterKnife;
+import is.hellos.demos.MainApplication;
 
 public abstract class BaseActivity extends AppCompatActivity {
 
@@ -19,5 +20,9 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(getLayoutRes());
         ButterKnife.bind(this);
+    }
+
+    protected MainApplication getMainApplication() {
+        return (MainApplication) getApplication();
     }
 }
