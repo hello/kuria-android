@@ -5,8 +5,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 
 import is.hellos.demos.activities.SettingsActivity;
+import is.hellos.demos.broadcastreceivers.NotificationBroadcastReceiver;
 import is.hellos.demos.network.ApiService;
 import retrofit2.Retrofit;
 
@@ -34,13 +36,13 @@ public class MainApplication extends Application {
 
     @Override
     public void onCreate() {
-        super.onCreate();/*
+        super.onCreate();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(new NotificationBroadcastReceiver(),
                                                                  NotificationBroadcastReceiver.getIntentFilter());
 
+       /*
         final String TAG = MainApplication.class.getSimpleName();
-
         final ZeroMQSubscriber babyStateSubscriber = ZeroMQSubscriber.getBabyStateSubscriber();
         babyStateSubscriber.setListener(new BabyStateInteractor(this));
 

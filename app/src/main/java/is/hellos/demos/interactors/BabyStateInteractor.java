@@ -56,7 +56,7 @@ public class BabyStateInteractor implements ZeroMQSubscriber.Listener {
                 return;
             }
 
-            final Notification notification = new Notification(
+            final Notification notification = Notification.getImportantNotification(
                     context.getString(R.string.notification_not_breathing_title),
                     context.getString(R.string.notification_not_breathing_msg),
                     BABY_STATE_TAG,
