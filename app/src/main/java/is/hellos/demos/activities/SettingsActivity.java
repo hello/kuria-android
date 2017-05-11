@@ -3,9 +3,7 @@ package is.hellos.demos.activities;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.RemoteInput;
 import android.content.Intent;
-import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -20,20 +18,24 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 import butterknife.BindView;
 import is.hellos.demos.R;
+import is.hellos.demos.models.protos.RadarMessages;
 import is.hellos.demos.models.protos.RespirationHealth;
+import is.hellos.demos.models.respiration.RespirationStat;
+import is.hellos.demos.network.zmq.MessageReceivedListener;
 import is.hellos.demos.network.zmq.ZeroMQSubscriber;
 
+import static is.hellos.demos.models.protos.RespirationHealth.ResiprationHealthState.NOBODY_PRESENT;
 import static is.hellos.demos.models.protos.RespirationHealth.ResiprationHealthState.PERSON_IS_PRESENT_NOT_BREATHING;
+import static is.hellos.demos.network.zmq.ZeroMQSubscriber.RESPIRATION_STATS_TOPIC;
 
-public class SettingsActivity extends BaseActivity
-        implements ZeroMQSubscriber.Listener {
+public class SettingsActivity extends BaseActivity {
 
     private static final int REQUEST_DEATH = 1000;
     private static final int NOTIFICATION_ID = 50;
     private static final String EXTRA_OK = SettingsActivity.class.getSimpleName() + ".EXTRA_OK";
     private Handler handler = new Handler();
     private NotificationManager notificationManager;
-    private ZeroMQSubscriber zeroMQSubscriber;
+    private float currentRpm = -1;
 
     @BindView(R.id.activity_settings_switch_death)
     Switch deathSwitch;
@@ -44,6 +46,52 @@ public class SettingsActivity extends BaseActivity
             getMainApplication().setNotifyDeath(isChecked);
             updateState();
         }
+    };
+
+
+    public ZeroMQSubscriber.Listener babyStateListener = new MessageReceivedListener() {
+
+        @Override
+        public void onMessageReceived(@NonNull final byte[] message) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+
+                        final RespirationHealth.RespirationStatus respirationHealth = RespirationHealth.RespirationStatus.parseFrom(message);
+                        if (getMainApplication().shouldNotifyDeath()) {
+                            updateNotification(respirationHealth);
+                        }
+
+                    } catch (InvalidProtocolBufferException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+
+    };
+
+    public ZeroMQSubscriber.Listener respirationListener = new MessageReceivedListener() {
+
+        @Override
+        public void onMessageReceived(@NonNull final byte[] message) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+
+                        final RadarMessages.FeatureVector featureVector = RadarMessages.FeatureVector.parseFrom(message);
+                        RespirationStat respirationStat = RespirationStat.convertFrom(featureVector);
+                        currentRpm = respirationStat.getBreathsPerMinute();
+
+                    } catch (InvalidProtocolBufferException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+
     };
 
     @Override
@@ -57,9 +105,13 @@ public class SettingsActivity extends BaseActivity
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         updateState();
 
-        zeroMQSubscriber = ZeroMQSubscriber.getBabyStateSubscriber();
-        zeroMQSubscriber.setListener(this);
-        new Thread(zeroMQSubscriber).start();
+        ZeroMQSubscriber babyStateSubscriber = ZeroMQSubscriber.getBabyStateSubscriber();
+        babyStateSubscriber.setListener(babyStateListener);
+        new Thread(babyStateSubscriber).start();
+
+        ZeroMQSubscriber respirationSubscriber = new ZeroMQSubscriber(RESPIRATION_STATS_TOPIC);
+        respirationSubscriber.setListener(respirationListener);
+        new Thread(respirationSubscriber).start();
         onNewIntent(getIntent());
     }
 
@@ -80,53 +132,11 @@ public class SettingsActivity extends BaseActivity
         }
     }
 
-    // region Listener
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (zeroMQSubscriber != null) {
-            zeroMQSubscriber.stop();
-        }
 
 
-    }
-
-    @Override
-    public void onConnecting() {
-        // postToast(R.string.state_connecting);
-
-    }
-
-    @Override
-    public void onConnected() {
-        //  postToast(R.string.state_connected);
-
-    }
-
-    @Override
-    public void onDisconnected() {
-        //   postToast(R.string.state_disconnected);
-
-    }
-
-
-    @Override
-    public void onMessageReceived(@NonNull final byte[] message) {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                try {
-
-                    final RespirationHealth.RespirationStatus respirationHealth = RespirationHealth.RespirationStatus.parseFrom(message);
-                    if (getMainApplication().shouldNotifyDeath()) {
-                        updateNotification(respirationHealth);
-                    }
-
-                } catch (InvalidProtocolBufferException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
     }
 
     //endregion
@@ -172,9 +182,12 @@ public class SettingsActivity extends BaseActivity
                 titleText = "Your baby is dead.";
                 messageText = "Check if your baby died";
                 builder.addAction(getHelpAction());
+            } else if (NOBODY_PRESENT.equals(status.getHealthState())) {
+                titleText = "Your baby is missing";
+                messageText = "Make sure it didn't fall out of its crib!";
             } else {
                 titleText = "Your baby is breathing fine.";
-                messageText = "That's some good breathing.";
+                messageText = "That's some good breathing.| " + currentRpm + " rpm";
             }
         }
         builder.setContentTitle(titleText)

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Demos</string>
+    <string name="app_name">Baby Stuff</string>
     <string name="state_connecting">Connecting</string>
     <string name="state_connected">Connected</string>
     <string name="state_disconnected">Disconnected</string>

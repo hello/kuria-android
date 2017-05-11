@@ -4,7 +4,12 @@ package is.hellos.demos.models.time;
 import android.graphics.Paint;
 import android.support.annotation.NonNull;
 
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 public class NodeController {
+    private static final int BACK_NODES_CAPACITY = 20;
+    private Queue<Node> backNodes = new LinkedBlockingQueue<>(BACK_NODES_CAPACITY);
     private final Paint pathPaint;
     private Node root;
     private Node tail;
@@ -32,12 +37,18 @@ public class NodeController {
     public synchronized void addNode(final long time,
                                      final float value) {
         if (Math.abs(value) > 2) {
-            return;
+            // return;
         }
-        if (maxTracker.isGreaterThanMaxValue(value)) {
-            maxTracker.setMaxValue(value);
+        final float averageValue = backNodesAverage(value);
+        if (maxTracker.isGreaterThanMaxValue(averageValue)) {
+            maxTracker.setMaxValue(averageValue);
         }
-        this.tail.setNext(new Node(time, value));
+        final Node node = new Node(time, averageValue);
+        if (backNodes.size() == BACK_NODES_CAPACITY){
+            backNodes.remove();
+        }
+        backNodes.add(node);
+        this.tail.setNext(node);
         this.tail = tail.getNext();
         numOfNodes += 1;
 
@@ -62,6 +73,18 @@ public class NodeController {
                 ptr = ptr.getNext();
             }
         }
+    }
+
+    private float backNodesAverage(final float value) {
+        float average = 0;
+        int count = 1;
+        for (final Node node : backNodes) {
+            average += node.getValue();
+            count++;
+        }
+        average += value;
+        average /= count;
+        return average;
     }
 
     public Node getRoot() {
