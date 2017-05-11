@@ -16,6 +16,9 @@ import android.widget.Toast;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import java.text.DecimalFormat;
+import java.util.Locale;
+
 import butterknife.BindView;
 import is.hellos.demos.R;
 import is.hellos.demos.models.protos.RadarMessages;
@@ -35,7 +38,7 @@ public class SettingsActivity extends BaseActivity {
     private static final String EXTRA_OK = SettingsActivity.class.getSimpleName() + ".EXTRA_OK";
     private Handler handler = new Handler();
     private NotificationManager notificationManager;
-    private float currentRpm = -1;
+    private int currentRpm = -1;
 
     @BindView(R.id.activity_settings_switch_death)
     Switch deathSwitch;
@@ -57,12 +60,10 @@ public class SettingsActivity extends BaseActivity {
                 @Override
                 public void run() {
                     try {
-
                         final RespirationHealth.RespirationStatus respirationHealth = RespirationHealth.RespirationStatus.parseFrom(message);
                         if (getMainApplication().shouldNotifyDeath()) {
                             updateNotification(respirationHealth);
                         }
-
                     } catch (InvalidProtocolBufferException e) {
                         e.printStackTrace();
                     }
@@ -80,11 +81,9 @@ public class SettingsActivity extends BaseActivity {
                 @Override
                 public void run() {
                     try {
-
                         final RadarMessages.FeatureVector featureVector = RadarMessages.FeatureVector.parseFrom(message);
                         RespirationStat respirationStat = RespirationStat.convertFrom(featureVector);
-                        currentRpm = respirationStat.getBreathsPerMinute();
-
+                        currentRpm = ((int) respirationStat.getBreathsPerMinute());
                     } catch (InvalidProtocolBufferException e) {
                         e.printStackTrace();
                     }
@@ -180,24 +179,26 @@ public class SettingsActivity extends BaseActivity {
         } else {
             if (PERSON_IS_PRESENT_NOT_BREATHING.equals(status.getHealthState())) {
                 titleText = "Your baby is dead.";
-                messageText = "Check if your baby died";
+                messageText = "Check if your baby died. Click send help to contact 911.";
+                builder.setPriority(Notification.PRIORITY_HIGH);
+                builder.setVibrate(new long[]{1, 5, 1});
                 builder.addAction(getHelpAction());
             } else if (NOBODY_PRESENT.equals(status.getHealthState())) {
                 titleText = "Your baby is missing";
                 messageText = "Make sure it didn't fall out of its crib!";
             } else {
                 titleText = "Your baby is breathing fine.";
-                messageText = "That's some good breathing.| " + currentRpm + " rpm";
+                if (currentRpm == -1) {
+                    messageText = "That's some good breathing";
+                } else {
+                    messageText = "Your baby is breathing at " + currentRpm + " breaths per minute. That's some good breathing";
+                }
             }
         }
         builder.setContentTitle(titleText)
                .setContentText(messageText)
                .setStyle(new Notification.BigTextStyle().bigText(messageText))
                .setOngoing(true)
-               //  .setPriority(Notification.PRIORITY_HIGH)
-               //  .setVibrate(new long[]{1, 5, 1})
-               //.addAction(getHelpAction())
-               //.addAction(getOkAction())
                .build();
         notificationManager.notify(NOTIFICATION_ID, builder.build());
 

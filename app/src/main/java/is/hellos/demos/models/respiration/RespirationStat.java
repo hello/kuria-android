@@ -40,8 +40,10 @@ public class RespirationStat {
     }
 
     public float getBreathsPerMinute() {
-
-        return 60  / Math.max(breathDurationSeconds, 0.05f);
+        if (breathDurationSeconds == 0) {
+            return breathDurationSeconds;
+        }
+        return 60 / breathDurationSeconds;
     }
 
     public float getStandardDevBPM() {
@@ -58,7 +60,7 @@ public class RespirationStat {
 
     @Override
     public String toString() {
-        return "RespirationStat{"+
+        return "RespirationStat{" +
                 "\nbreathDurationSeconds=" + breathDurationSeconds +
                 ",\nstandardDevBPM=" + standardDevBPM +
                 ",\nenergyDb=" + energyDb +
