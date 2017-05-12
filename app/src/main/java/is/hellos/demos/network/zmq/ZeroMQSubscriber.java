@@ -1,6 +1,5 @@
 package is.hellos.demos.network.zmq;
 
-import android.os.NetworkOnMainThreadException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -10,6 +9,7 @@ import org.zeromq.ZMQException;
 
 
 public class ZeroMQSubscriber implements Runnable {
+    public static final String CRYING_TOPIC = "v1/is_crying";
     public static final String BASEBAND_TOPIC = "v1/baseband";
     public static final String PLOT_TOPIC = "PLOT";
     public static final String STATS_TOPIC = "STATS";
@@ -47,6 +47,7 @@ public class ZeroMQSubscriber implements Runnable {
     private static final String BABY_STATE_IP_ADDRESS = "tcp://192.168.128.40:5565";
   //  private static final String IP_ADDRESS = "tcp://192.168.128.119:5564";
     private static final String IP_ADDRESS = "tcp://192.168.128.40:5564";
+    private static final String CRYING_IP_ADDRESS = "tcp://192.168.128.40:5566";
 
     private static final Listener EMPTY_LISTENER = new Listener() {
         @Override
@@ -79,6 +80,10 @@ public class ZeroMQSubscriber implements Runnable {
 
     public static ZeroMQSubscriber getBabyStateSubscriber() {
         return new ZeroMQSubscriber(BABY_STATE_TOPIC, BABY_STATE_IP_ADDRESS);
+    }
+
+    public static ZeroMQSubscriber getCryingDetectorSubscriber() {
+        return new ZeroMQSubscriber(CRYING_TOPIC, CRYING_IP_ADDRESS);
     }
 
     public ZeroMQSubscriber(@NonNull final String topic) {

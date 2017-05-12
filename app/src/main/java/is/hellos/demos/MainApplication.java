@@ -16,6 +16,7 @@ public class MainApplication extends Application {
 
     private static final String PREF_NAME = SettingsActivity.class.getSimpleName() + ".PREF_NAME";
     private static final String KEY_DEATH_NOTIFICATIONS = SettingsActivity.class.getSimpleName() + ".KEY_DEATH_NOTIFICATIONS";
+    private static final String KEY_CRYING_NOTIFICATIONS = SettingsActivity.class.getSimpleName() + ".KEY_CRYING_NOTIFICATIONS";
     @Nullable
     private ApiService apiService = null;
 
@@ -66,5 +67,13 @@ public class MainApplication extends Application {
 
     public void setNotifyDeath(final boolean notify) {
         getSharedPreferences().edit().putBoolean(KEY_DEATH_NOTIFICATIONS, notify).apply();
+    }
+
+    public void setNotifyCrying(boolean notify) {
+        getSharedPreferences().edit().putBoolean(KEY_CRYING_NOTIFICATIONS, notify).apply();
+    }
+
+    public boolean shouldNotifyCrying() {
+        return getSharedPreferences().getBoolean(KEY_CRYING_NOTIFICATIONS, false);
     }
 }

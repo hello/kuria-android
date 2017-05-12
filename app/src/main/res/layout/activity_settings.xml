@@ -6,8 +6,15 @@
               android:padding="24dp">
 
     <Switch
-        android:id="@+id/activity_settings_switch_death"
+    android:id="@+id/activity_settings_switch_death"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Respiration Notifications"/>
+
+    <Switch
+        android:id="@+id/activity_settings_switch_crying"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Notify on Death"/>
+        android:text="Crying Detected Notifications"
+        android:layout_marginTop="24dp"/>
 </LinearLayout>

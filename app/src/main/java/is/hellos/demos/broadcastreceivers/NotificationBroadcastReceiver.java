@@ -63,7 +63,7 @@ public class NotificationBroadcastReceiver extends BroadcastReceiver {
         final Notification notification = (Notification) intent.getSerializableExtra(EXTRA_NOTIFICATION);
         final Intent activityIntent = new Intent(context, notification.getTargetClass());
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
-        builder.setSmallIcon(R.mipmap.ic_launcher);
+        builder.setSmallIcon(R.drawable.ic_child_care_white_24dp);
         builder.setContentTitle(notification.getTitle());
         builder.setContentText(notification.getMsg());
         builder.setCategory(android.app.Notification.CATEGORY_EVENT);
