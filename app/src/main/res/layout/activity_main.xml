@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context="is.hellos.demos.activities.MainActivity">
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              tools:context="is.hellos.demos.activities.MainActivity">
 
 
     <TextView
@@ -12,41 +12,44 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="24dp"
-        android:text="Radar Graph 1" />
+        android:text="Radar Graph 1"
+        android:visibility="gone"/>
 
     <TextView
         android:id="@+id/activity_textview_timeline_graph_one"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="24dp"
-        android:text="Timeline Graph 1" />
+        android:text="Timeline Graph 1"
+        android:visibility="gone"/>
 
     <TextView
         android:id="@+id/activity_textview_wave_graph_one"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="24dp"
-        android:text="Wave Graph 1" />
+        android:text="Wave Graph 1"
+        android:visibility="gone"/>
 
     <TextView
         android:id="@+id/activity_textview_time_graph_one"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="24dp"
-        android:text="Time Graph 1" />
+        android:text="Time Graph 1"/>
 
     <TextView
         android:id="@+id/activity_textview_respiration_graph"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="24dp"
-        android:text="Respiration Graph" />
+        android:text="Respiration Graph"/>
 
     <TextView
         android:id="@+id/activity_textview_time_settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="24dp"
-        android:text="Settings" />
+        android:text="Settings"/>
 
 </LinearLayout>

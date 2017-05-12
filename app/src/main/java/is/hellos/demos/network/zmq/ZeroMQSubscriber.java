@@ -46,7 +46,7 @@ public class ZeroMQSubscriber implements Runnable {
     private static final String BABY_STATE_TOPIC = "v1/baby_state";
     private static final String BABY_STATE_IP_ADDRESS = "tcp://192.168.128.40:5565";
   //  private static final String IP_ADDRESS = "tcp://192.168.128.119:5564";
-    private static final String IP_ADDRESS = "tcp://192.168.129.43:5564";
+    private static final String IP_ADDRESS = "tcp://192.168.128.40:5564";
 
     private static final Listener EMPTY_LISTENER = new Listener() {
         @Override
