@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="respiration_appwidget_min_width">280dp</dimen>
+    <dimen name="respiration_appwidget_min_height">120dp</dimen>
+    <dimen name="respiration_appwidget_padding">16dp</dimen>
+    <dimen name="rounded_rect_radius">20dp</dimen>
+</resources>

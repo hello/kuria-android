@@ -33,6 +33,23 @@
             android:name=".activities.SettingsActivity"
             android:launchMode="singleInstance"/>
 
+        <service
+            android:enabled="true"
+            android:name=".widget.RespirationWidgetService"/>
+
+        <receiver
+            android:icon="@drawable/ic_child_care_white_24dp"
+            android:label="@string/app_widget_name"
+            android:name=".widget.RespirationWidgetProvider">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/respiration_appwidget_info"
+                />
+        </receiver>
+
     </application>
 
 </manifest>
