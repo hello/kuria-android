@@ -37,6 +37,9 @@
             android:enabled="true"
             android:name=".widget.RespirationWidgetService"/>
 
+        <service android:name=".widget.RespirationWidgetJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE"/>
+
         <receiver
             android:icon="@drawable/ic_child_care_white_24dp"
             android:label="@string/app_widget_name"
