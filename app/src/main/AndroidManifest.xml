@@ -33,9 +33,9 @@
             android:name=".activities.SettingsActivity"
             android:launchMode="singleInstance"/>
 
-
-
-
+        <service
+            android:enabled="true"
+            android:name=".widget.RespirationWidgetService"/>
 
         <receiver
             android:icon="@drawable/ic_child_care_white_24dp"

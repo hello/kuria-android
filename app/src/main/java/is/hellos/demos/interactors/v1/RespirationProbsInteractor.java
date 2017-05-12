@@ -5,7 +5,6 @@ import android.support.annotation.Nullable;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import java.util.Observable;
 import java.util.Observer;
 
 import is.hellos.demos.interactors.BaseZMQInteractor;
@@ -16,12 +15,9 @@ import is.hellos.demos.models.respiration.RespirationProb;
  * Created by simonchen on 5/10/17.
  */
 
-public class RespirationProbsInteractor extends BaseZMQInteractor {
-
-    private RespirationObservable observable;
+public class RespirationProbsInteractor extends BaseZMQInteractor<RespirationProb> {
 
     public RespirationProbsInteractor() {
-        this.observable = new RespirationObservable();
     }
 
     @Override
@@ -47,13 +43,4 @@ public class RespirationProbsInteractor extends BaseZMQInteractor {
     public void removeObserver(@Nullable final Observer observer) {
         this.observable.deleteObserver(observer);
     }
-
-static class RespirationObservable extends Observable {
-
-    public void update(RespirationProb respirationProb) {
-        setChanged();
-        notifyObservers(respirationProb);
-        clearChanged();
-    }
-}
 }
