@@ -40,12 +40,12 @@ public class RespirationProb {
         return "RespirationProb{" +
                 "\nexhaled=" +
                 exhaled +
-                ",\nexhaling=" +
-                exhaling +
-                ",\ninhaled=" +
-                inhaled +
                 ",\ninhaling=" +
                 inhaling +
+                ",\ninhaled=" +
+                inhaled +
+                ",\nexhaling=" +
+                exhaling +
                 "}";
     }
 }
