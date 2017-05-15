@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
@@ -16,11 +17,9 @@ import android.widget.Toast;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import java.text.DecimalFormat;
-import java.util.Locale;
-
 import butterknife.BindView;
 import is.hellos.demos.R;
+import is.hellos.demos.broadcastreceivers.NotificationBroadcastReceiver;
 import is.hellos.demos.models.protos.RadarMessages;
 import is.hellos.demos.models.protos.RespirationHealth;
 import is.hellos.demos.models.respiration.RespirationStat;
@@ -34,7 +33,8 @@ import static is.hellos.demos.network.zmq.ZeroMQSubscriber.RESPIRATION_STATS_TOP
 public class SettingsActivity extends BaseActivity {
 
     private static final int REQUEST_DEATH = 1000;
-    private static final int NOTIFICATION_ID = 50;
+    private static final int NOTIFICATION_RESPIRATION_ID = 50;
+    private static final int NOTIFICATION_CRYING_ID = 51;
     private static final String EXTRA_OK = SettingsActivity.class.getSimpleName() + ".EXTRA_OK";
     private Handler handler = new Handler();
     private NotificationManager notificationManager;
@@ -42,12 +42,22 @@ public class SettingsActivity extends BaseActivity {
 
     @BindView(R.id.activity_settings_switch_death)
     Switch deathSwitch;
+    @BindView(R.id.activity_settings_switch_crying)
+    Switch cryingSwitch;
 
     private CompoundButton.OnCheckedChangeListener deathSwitchCheckChangedListener = new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             getMainApplication().setNotifyDeath(isChecked);
             updateState();
+        }
+    };
+
+    private CompoundButton.OnCheckedChangeListener cryingSwitchCheckChangedListener = new CompoundButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            getMainApplication().setNotifyCrying(isChecked);
+            updateCryingState();
         }
     };
 
@@ -93,6 +103,27 @@ public class SettingsActivity extends BaseActivity {
 
     };
 
+    public ZeroMQSubscriber.Listener cryingListener = new MessageReceivedListener() {
+
+        @Override
+        public void onMessageReceived(@NonNull final byte[] message) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+
+                        if (getMainApplication().shouldNotifyCrying()) {
+                            updateCryingNotification(RadarMessages.FeatureVector.parseFrom(message));
+                        }
+                    } catch (InvalidProtocolBufferException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+
+    };
+
     @Override
     protected int getLayoutRes() {
         return R.layout.activity_settings;
@@ -103,6 +134,7 @@ public class SettingsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         updateState();
+        updateCryingState();
 
         ZeroMQSubscriber babyStateSubscriber = ZeroMQSubscriber.getBabyStateSubscriber();
         babyStateSubscriber.setListener(babyStateListener);
@@ -111,6 +143,10 @@ public class SettingsActivity extends BaseActivity {
         ZeroMQSubscriber respirationSubscriber = new ZeroMQSubscriber(RESPIRATION_STATS_TOPIC);
         respirationSubscriber.setListener(respirationListener);
         new Thread(respirationSubscriber).start();
+
+        ZeroMQSubscriber cryingSubscriber = ZeroMQSubscriber.getCryingDetectorSubscriber();
+        cryingSubscriber.setListener(cryingListener);
+        new Thread(cryingSubscriber).start();
         onNewIntent(getIntent());
     }
 
@@ -160,7 +196,38 @@ public class SettingsActivity extends BaseActivity {
         } else {
             stopNotification();
         }
+    }
 
+    private void updateCryingState() {
+        final boolean shouldNotifyCrying = getMainApplication().shouldNotifyCrying();
+        this.cryingSwitch.setOnCheckedChangeListener(null);
+        this.cryingSwitch.setChecked(shouldNotifyCrying);
+        this.cryingSwitch.setOnCheckedChangeListener(cryingSwitchCheckChangedListener);
+        if (!shouldNotifyCrying) {
+            cancelCryingNotification();
+        }
+    }
+
+    private void updateCryingNotification(@NonNull final RadarMessages.FeatureVector featureVector) {
+        Log.d(SettingsActivity.class.getSimpleName(), featureVector.toString());
+
+        final float isCrying = featureVector.getFloatfeats(0);
+
+        if (isCrying < 0.5) {
+            return;
+        }
+
+        final is.hellos.demos.models.notification.Notification notification = new is.hellos.demos.models.notification.Notification(
+                "Crying Detected",
+                "Your baby is crying right now.",
+                NOTIFICATION_CRYING_ID,
+                MainActivity.class /*openActivity on press*/,
+                false /*isImportant*/);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(NotificationBroadcastReceiver.getPushIntent(notification));
+    }
+
+    private void cancelCryingNotification() {
+        LocalBroadcastManager.getInstance(this).sendBroadcast(NotificationBroadcastReceiver.getCancelIntent(NOTIFICATION_CRYING_ID));
     }
 
 
@@ -200,12 +267,12 @@ public class SettingsActivity extends BaseActivity {
                .setStyle(new Notification.BigTextStyle().bigText(messageText))
                .setOngoing(true)
                .build();
-        notificationManager.notify(NOTIFICATION_ID, builder.build());
+        notificationManager.notify(NOTIFICATION_RESPIRATION_ID, builder.build());
 
     }
 
     private void stopNotification() {
-        this.notificationManager.cancel(NOTIFICATION_ID);
+        this.notificationManager.cancel(NOTIFICATION_RESPIRATION_ID);
 
     }
 
