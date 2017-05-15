@@ -6,6 +6,7 @@ import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.view.View;
 import android.widget.TextView;
 
 import java.util.Observable;
@@ -58,6 +59,11 @@ implements ZeroMQSubscriber.Listener, Observer{
     @Override
     protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        stateTextView.setVisibility(View.GONE);
+        respirationStatsTextView.setVisibility(View.GONE);
+        respirationProbsTextView.setVisibility(View.GONE);
+
         this.respirationStatsSubscriber = new ZeroMQSubscriber(ZeroMQSubscriber.RESPIRATION_STATS_TOPIC);
         this.respirationStatsSubscriber.setListener(this);
         this.hapticUtil = new HapticUtil(this);
