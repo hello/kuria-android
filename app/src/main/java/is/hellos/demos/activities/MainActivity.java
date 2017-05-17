@@ -7,6 +7,7 @@ import android.widget.TextView;
 
 import butterknife.BindView;
 import is.hellos.demos.R;
+import is.hellos.demos.googleFit.GoogleFitActivity;
 
 public class MainActivity extends BaseActivity {
 
@@ -21,6 +22,8 @@ public class MainActivity extends BaseActivity {
 
     @BindView(R.id.activity_textview_respiration_graph)
     TextView respirationGraph;
+    @BindView(R.id.activity_textview_google_fit)
+    TextView googleFit;
     @BindView(R.id.activity_textview_time_settings)
     TextView settings;
 
@@ -60,6 +63,12 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, RespirationActivity.class));
+            }
+        });
+        googleFit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, GoogleFitActivity.class));
             }
         });
         settings.setOnClickListener(new View.OnClickListener() {

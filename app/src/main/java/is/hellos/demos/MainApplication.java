@@ -40,7 +40,6 @@ public class MainApplication extends Application {
 
         LocalBroadcastManager.getInstance(this).registerReceiver(new NotificationBroadcastReceiver(),
                                                                  NotificationBroadcastReceiver.getIntentFilter());
-
        /*
         final String TAG = MainApplication.class.getSimpleName();
         final ZeroMQSubscriber babyStateSubscriber = ZeroMQSubscriber.getBabyStateSubscriber();

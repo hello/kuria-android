@@ -31,6 +31,7 @@
         <activity android:name=".activities.WaveActivity"/>
         <activity android:name=".activities.TimeActivity"/>
         <activity android:name=".activities.RespirationActivity"/>
+        <activity android:name=".googleFit.GoogleFitActivity"/>
         <activity
             android:name=".activities.SettingsActivity"
             android:launchMode="singleInstance"/>
