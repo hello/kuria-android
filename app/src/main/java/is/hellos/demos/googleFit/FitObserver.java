@@ -22,20 +22,52 @@ class FitObserver implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        if (arg instanceof ConnectionResult) {
-            this.handler.onConnectionResult((ConnectionResult) arg);
-        } else if (arg instanceof Bundle) {
-            this.handler.onConnectionSuccess((Bundle) arg);
-        } else if (arg instanceof Status) {
-            this.handler.onSubscribeResult((Status) arg);
+        if (!(arg instanceof GoogleFitUtil.Wrapper)) {
+            return;
+        }
+        final GoogleFitUtil.Wrapper wrapper = (GoogleFitUtil.Wrapper) arg;
+
+        switch (wrapper.TAG) {
+            case CONNECTION_FAILED:
+                this.handler.onConnectionFailedResult((ConnectionResult) wrapper.VALUE);
+                return;
+            case CONNECTED:
+                this.handler.onConnectionSuccess((Bundle) wrapper.VALUE);
+                return;
+            case SUBSCRIBED:
+                this.handler.onSubscribeResult((Status) wrapper.VALUE);
+                return;
+            case UNSUBSCRIBED:
+                this.handler.onUnSubscribeResult((Status) wrapper.VALUE);
+                return;
+            case SESSION_STARTED:
+                this.handler.onSessionStartResult((Status) wrapper.VALUE);
+                return;
+            case SESSION_STOPPED:
+                this.handler.onSessionStopResult((Status) wrapper.VALUE);
+                return;
+            case DISCONNECTED:
+                this.handler.onDisconnectionResult((Status) wrapper.VALUE);
+                return;
+            default:
+                throw new IllegalStateException("unsupported state " + wrapper.TAG);
         }
     }
 
     interface FitObserverHandler {
-        void onConnectionResult(ConnectionResult connectionResult);
+        void onConnectionFailedResult(ConnectionResult connectionResult);
+
+        void onDisconnectionResult(Status status);
 
         void onConnectionSuccess(Bundle bundle);
 
         void onSubscribeResult(Status status);
+
+        void onUnSubscribeResult(Status status);
+
+        void onSessionStartResult(Status status);
+
+        void onSessionStopResult(Status status);
     }
-}
+
+    }

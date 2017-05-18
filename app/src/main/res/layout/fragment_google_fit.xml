@@ -9,4 +9,12 @@
         android:layout_height="wrap_content"
         android:text="@string/google_fit_fragment_title"/>
 
+    <Button
+        android:id="@+id/fragment_google_fit_session_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/start_session"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/button_color_selector"/>
+
 </LinearLayout>

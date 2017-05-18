@@ -1,9 +1,11 @@
 package is.hellos.demos.googleFit;
 
+import android.Manifest;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresPermission;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -20,11 +22,11 @@ import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Device;
 import com.google.android.gms.fitness.data.Field;
 import com.google.android.gms.fitness.data.Session;
+import com.google.android.gms.fitness.result.SessionStopResult;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Observer;
 import java.util.concurrent.TimeUnit;
 
 import is.hellos.demos.interactors.BaseZMQInteractor;
@@ -39,24 +41,37 @@ public class GoogleFitUtil {
 
     private final Context context;
     private final GoogleApiClient client;
-    private final FitConnectionFailedListener fitConnectionFailedListener;
+    private final FitConnectionFailedCallback fitConnectionFailedCallback;
     private final FitConnectionCallback fitConnectionCallback;
-    private final FitSubscriptionCallback fitSubscriptionCallback;
+    private final FitStatusCallback fitSubscriptionCallback;
+    private final FitStatusCallback fitUnsubscribeCallback;
+    private final FitStatusCallback fitSessionStartCallback;
+    private final FitSessionStopCallback fitSessionStopCallback;
+
     private final DataSource dataSource;
+
+    @Nullable
+    private Session session;
 
     public GoogleFitUtil(@NonNull final Context context) {
         this.context = context;
         this.fitConnectionCallback = new FitConnectionCallback();
-        this.fitConnectionFailedListener = new FitConnectionFailedListener();
-        this.fitSubscriptionCallback = new FitSubscriptionCallback();
-        this.client = buildClient(fitConnectionCallback, fitConnectionFailedListener);
+        this.fitConnectionFailedCallback = new FitConnectionFailedCallback();
+        this.fitSubscriptionCallback = new FitStatusCallback(State.SUBSCRIBED);
+        this.fitUnsubscribeCallback = new FitStatusCallback(State.UNSUBSCRIBED);
+        this.fitSessionStartCallback = new FitStatusCallback(State.SESSION_STARTED);
+        this.fitSessionStopCallback = new FitSessionStopCallback();
+        this.client = buildClient(fitConnectionCallback, fitConnectionFailedCallback);
         this.dataSource = buildDataSource();
     }
 
     public void start(FitObserver observer) {
-        this.fitConnectionFailedListener.addObserver(observer);
+        this.fitConnectionFailedCallback.addObserver(observer);
         this.fitConnectionCallback.addObserver(observer);
         this.fitSubscriptionCallback.addObserver(observer);
+        this.fitUnsubscribeCallback.addObserver(observer);
+        this.fitSessionStartCallback.addObserver(observer);
+        this.fitSessionStopCallback.addObserver(observer);
         if (!(client.isConnected() || client.isConnecting())) {
             client.connect();
         }
@@ -67,13 +82,19 @@ public class GoogleFitUtil {
             unsubscribe();
             client.disconnect();
         }
-        this.fitConnectionCallback.removeObservers();
-        this.fitConnectionFailedListener.removeObservers();
-        this.fitSubscriptionCallback.removeObservers();
+    }
+
+    public void removeObservers() {
+        this.fitConnectionCallback.deleteObservers();
+        this.fitConnectionFailedCallback.deleteObservers();
+        this.fitSubscriptionCallback.deleteObservers();
+        this.fitSessionStartCallback.deleteObservers();
+        this.fitUnsubscribeCallback.deleteObservers();
+        this.fitSessionStopCallback.deleteObservers();
     }
 
     public void disable() {
-        Fitness.ConfigApi.disableFit(client).await(10, TimeUnit.SECONDS);
+        Fitness.ConfigApi.disableFit(client);
     }
 
     GoogleApiClient buildClient(@NonNull final GoogleApiClient.ConnectionCallbacks connectionCallback,
@@ -109,7 +130,7 @@ public class GoogleFitUtil {
         while (size < 100) {
             dataPoint = dataSet.createDataPoint();
             dataPoint.setTimestamp(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-            dataPoint.getValue(Field.FIELD_BPM).setInt(100);
+            dataPoint.getValue(Field.FIELD_BPM).setFloat(100f); // will throw exception if wrong type of value set
             dataSet.add(dataPoint);
             size++;
         }
@@ -125,56 +146,64 @@ public class GoogleFitUtil {
         });
     }
 
+    @RequiresPermission(allOf = {Manifest.permission.BODY_SENSORS})
     public void subscribe() {
         Fitness.RecordingApi.subscribe(client, dataSource).setResultCallback(fitSubscriptionCallback);
     }
 
     public void unsubscribe() {
-        Fitness.RecordingApi.unsubscribe(client, dataSource).await(10, TimeUnit.SECONDS);
+        Fitness.RecordingApi.unsubscribe(client, dataSource).setResultCallback(fitUnsubscribeCallback);
     }
 
     private Session session() {
         final long startTimeMillis = System.currentTimeMillis();
         return new Session.Builder()
-                .setName("Baby BPM Session" + new SimpleDateFormat("MM, dd, yyyy HH:mm:ss", Locale.US).format(new Date(startTimeMillis)))
-                .setIdentifier("My Baby BPM Session")
+                .setName("Baby BPM Session")
+                .setIdentifier("My Baby BPM Session" + new SimpleDateFormat("MM, dd, yyyy HH:mm:ss", Locale.US).format(new Date(startTimeMillis)))
                 .setDescription("Real time breaths per minute session")
                 .setStartTime(startTimeMillis, TimeUnit.MILLISECONDS)
                 .build();
     }
 
     public void startSession() {
-        Fitness.SessionsApi.startSession(client, session()).setResultCallback(new ResultCallback<Status>() {
-            @Override
-            public void onResult(@NonNull Status status) {
-                Log.i(TAG, "session start result status " + status.toString());
-                if (status.isSuccess()) {
-                    insertData();
-                }
-            }
-        });
+        this.session = session();
+        Fitness.SessionsApi.startSession(client, session).setResultCallback(fitSessionStartCallback);
     }
 
-    static abstract class FitObservable<T> {
-
-        BaseZMQInteractor.BaseObservable<T> observable = new BaseZMQInteractor.BaseObservable<>();
-
-        public void addObserver(@NonNull final Observer observer) {
-            this.observable.addObserver(observer);
+    public void stopSession() {
+        if (this.session == null) {
+            Log.i(TAG, "session not started");
+            return;
         }
+        Fitness.SessionsApi.stopSession(client, session.getIdentifier()).setResultCallback(fitSessionStopCallback);
+    }
 
-        public void removeObservers() {
-            this.observable.deleteObservers();
+    static abstract class FitObservable<T> extends BaseZMQInteractor.BaseObservable<Wrapper>{
+
+        abstract State getTag();
+
+        void wrapUpdate(T value) {
+            super.update(new Wrapper(getTag(), value));
         }
     }
 
-    static class FitConnectionCallback extends FitObservable<Bundle>
+    static class Wrapper {
+        final State TAG;
+        final Object VALUE;
+
+        Wrapper(State tag, Object value) {
+            TAG = tag;
+            VALUE = value;
+        }
+    }
+
+    private static class FitConnectionCallback extends FitObservable<Bundle>
             implements GoogleApiClient.ConnectionCallbacks {
 
         @Override
         public void onConnected(@Nullable Bundle bundle) {
             Log.i(TAG, "connected to client");
-            this.observable.update(bundle);
+            wrapUpdate(bundle);
         }
 
         @Override
@@ -185,25 +214,60 @@ public class GoogleFitUtil {
                 Log.i(TAG, "Connection lost.  Reason: Service Disconnected");
             }
         }
+
+        @Override
+        State getTag() {
+            return State.CONNECTED;
+        }
     }
 
-    static class FitConnectionFailedListener extends FitObservable<ConnectionResult>
+    private static class FitConnectionFailedCallback extends FitObservable<ConnectionResult>
             implements GoogleApiClient.OnConnectionFailedListener {
 
         @Override
         public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
             Log.i(TAG, "Connection failed. Reason: " + connectionResult);
             if (connectionResult.hasResolution()) {
-                this.observable.update(connectionResult);
+                wrapUpdate(connectionResult);
             }
+        }
+
+        @Override
+        State getTag() {
+            return State.CONNECTION_FAILED;
         }
     }
 
-    static class FitSubscriptionCallback extends FitObservable<Status> implements ResultCallback<Status>{
+    private static class FitStatusCallback extends FitObservable<Status> implements ResultCallback<Status> {
+
+        private final State state;
+
+        FitStatusCallback(@NonNull final State state) {
+            this.state = state;
+        }
+
         @Override
         public void onResult(@NonNull Status status) {
             Log.i(TAG, "subscription status " + status.toString());
-            this.observable.update(status);
+            wrapUpdate(status);
+        }
+
+        @Override
+        State getTag() {
+            return state;
+        }
+    }
+
+    private static class FitSessionStopCallback extends FitObservable<Status> implements ResultCallback<SessionStopResult> {
+        @Override
+        public void onResult(@NonNull SessionStopResult sessionStopResult) {
+            Log.i(TAG, "session stop result status " + sessionStopResult.toString());
+            wrapUpdate(sessionStopResult.getStatus());
+        }
+
+        @Override
+        State getTag() {
+            return State.SESSION_STOPPED;
         }
     }
 }
