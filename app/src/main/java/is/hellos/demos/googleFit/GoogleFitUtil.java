@@ -15,6 +15,7 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
+import com.google.android.gms.fitness.data.Bucket;
 import com.google.android.gms.fitness.data.DataPoint;
 import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.DataSource;
@@ -22,14 +23,23 @@ import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Device;
 import com.google.android.gms.fitness.data.Field;
 import com.google.android.gms.fitness.data.Session;
+import com.google.android.gms.fitness.request.DataReadRequest;
+import com.google.android.gms.fitness.result.DataReadResult;
 import com.google.android.gms.fitness.result.SessionStopResult;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import is.hellos.demos.interactors.BaseZMQInteractor;
+
+import static com.google.android.gms.fitness.data.DataType.AGGREGATE_HEART_RATE_SUMMARY;
+import static java.text.DateFormat.getDateInstance;
+import static java.text.DateFormat.getTimeInstance;
 
 /**
  * Created by simonchen on 5/15/17.
@@ -127,7 +137,7 @@ public class GoogleFitUtil {
         final DataSet dataSet = DataSet.create(dataSource);
         DataPoint dataPoint;
         int size = 0;
-        while (size < 100) {
+        while (size < 1) {
             dataPoint = dataSet.createDataPoint();
             dataPoint.setTimestamp(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
             dataPoint.getValue(Field.FIELD_BPM).setFloat(100f); // will throw exception if wrong type of value set
@@ -142,6 +152,18 @@ public class GoogleFitUtil {
             @Override
             public void onResult(@NonNull Status status) {
                 Log.i(TAG, "data set inserted status " + status.toString());
+                if (status.isSuccess()) {
+                    queryData();
+                }
+            }
+        });
+    }
+
+    public void queryData() {
+        Fitness.HistoryApi.readData(client, queryFitnessData()).setResultCallback(new ResultCallback<DataReadResult>() {
+            @Override
+            public void onResult(@NonNull DataReadResult dataReadResult) {
+                printData(dataReadResult);
             }
         });
     }
@@ -177,6 +199,87 @@ public class GoogleFitUtil {
         }
         Fitness.SessionsApi.stopSession(client, session.getIdentifier()).setResultCallback(fitSessionStopCallback);
     }
+
+    public static DataReadRequest queryFitnessData() {
+        // [START build_read_data_request]
+        // Setting a start and end date using a range of 1 week before this moment.
+        Calendar cal = Calendar.getInstance();
+        Date now = new Date();
+        cal.setTime(now);
+        long endTime = cal.getTimeInMillis();
+        cal.add(Calendar.WEEK_OF_YEAR, -1);
+        long startTime = cal.getTimeInMillis();
+
+        java.text.DateFormat dateFormat = getDateInstance();
+        Log.i(TAG, "Range Start: " + dateFormat.format(startTime));
+        Log.i(TAG, "Range End: " + dateFormat.format(endTime));
+
+        DataReadRequest readRequest = new DataReadRequest.Builder()
+                // The data request can specify multiple data types to return, effectively
+                // combining multiple data queries into one call.
+                // In this example, it's very unlikely that the request is for several hundred
+                // datapoints each consisting of a few steps and a timestamp.  The more likely
+                // scenario is wanting to see how many steps were walked per day, for 7 days.
+                .aggregate(DataType.TYPE_HEART_RATE_BPM, AGGREGATE_HEART_RATE_SUMMARY)
+                // Analogous to a "Group By" in SQL, defines how data should be aggregated.
+                // bucketByTime allows for a time span, whereas bucketBySession would allow
+                // bucketing by "sessions", which would need to be defined in code.
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+                .build();
+        // [END build_read_data_request]
+
+        return readRequest;
+    }
+
+    /**
+     * Log a record of the query result. It's possible to get more constrained data sets by
+     * specifying a data source or data type, but for demonstrative purposes here's how one would
+     * dump all the data. In this sample, logging also prints to the device screen, so we can see
+     * what the query returns, but your app should not log fitness information as a privacy
+     * consideration. A better option would be to dump the data you receive to a local data
+     * directory to avoid exposing it to other applications.
+     */
+    public static void printData(DataReadResult dataReadResult) {
+        // [START parse_read_data_result]
+        // If the DataReadRequest object specified aggregated data, dataReadResult will be returned
+        // as buckets containing DataSets, instead of just DataSets.
+        if (dataReadResult.getBuckets().size() > 0) {
+            Log.i(TAG, "Number of returned buckets of DataSets is: "
+                    + dataReadResult.getBuckets().size());
+            for (Bucket bucket : dataReadResult.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    dumpDataSet(dataSet);
+                }
+            }
+        } else if (dataReadResult.getDataSets().size() > 0) {
+            Log.i(TAG, "Number of returned DataSets is: "
+                    + dataReadResult.getDataSets().size());
+            for (DataSet dataSet : dataReadResult.getDataSets()) {
+                dumpDataSet(dataSet);
+            }
+        }
+        // [END parse_read_data_result]
+    }
+
+    // [START parse_dataset]
+    private static void dumpDataSet(DataSet dataSet) {
+        Log.i(TAG, "Data returned for Data type: " + dataSet.getDataType().getName());
+        DateFormat dateFormat = getTimeInstance();
+
+        for (DataPoint dp : dataSet.getDataPoints()) {
+            Log.i(TAG, "Data point:");
+            Log.i(TAG, "\tType: " + dp.getDataType().getName());
+            Log.i(TAG, "\tStart: " + dateFormat.format(dp.getStartTime(TimeUnit.MILLISECONDS)));
+            Log.i(TAG, "\tEnd: " + dateFormat.format(dp.getEndTime(TimeUnit.MILLISECONDS)));
+            for(Field field : dp.getDataType().getFields()) {
+                Log.i(TAG, "\tField: " + field.getName() +
+                        " Value: " + dp.getValue(field));
+            }
+        }
+    }
+    // [END parse_dataset]
 
     static abstract class FitObservable<T> extends BaseZMQInteractor.BaseObservable<Wrapper>{
 
